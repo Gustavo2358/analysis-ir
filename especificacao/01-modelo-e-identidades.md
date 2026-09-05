@@ -1,0 +1,93 @@
+# 01 — Modelo abstrato e identidades
+
+**Analysis IR 1.0.0 — Normativo**
+
+## 1. Publicação
+
+Uma `Publication` é um conjunto fechado e imutável de fatos de IR. Ela DEVE conter os componentes abaixo, mesmo que algum inventário esteja indisponível de forma explícita.
+
+| Componente | Cardinalidade | Significado |
+| --- | --- | --- |
+| `publicationId` | 1 | Namespace da publicação; não é nome do programa |
+| `version` | 1 | Versão semântica desta especificação |
+| `capabilities` | 1 | Capacidades requeridas e disponibilizadas, com versão |
+| `artifacts` | 0..N | Identidades lógicas dos artefatos de origem ou recursos estruturais |
+| `units` | 0..N | Unidades executáveis e seus inventários |
+| `storage` | 0..N | Células, regiões e suas propriedades declarativas |
+| `resources` | 0..N | Identidades internas e nomes externos tipados |
+| `artifactRelations` | 0..N | Relações estruturais, independentes de execução |
+| `origins` | 0..N | Âncoras de proveniência e derivações |
+| `coverage` | 1 | Inventário de cobertura, incluindo escopo e disponibilidade |
+| `uncertainties` | 0..N | Lacunas referenciadas por fatos ou escopos |
+| `premises` | 0..N | Premissas semânticas identificadas e rastreáveis |
+
+Uma publicação vazia é permitida apenas se seu escopo e a disponibilidade do inventário distinguirem “zero conhecido” de “não analisado”.
+
+## 2. Unidades e entradas
+
+Uma `Unit` possui identidade, origem, contenção opcional, declarações visíveis, uma coleção de entradas e uma coleção de sequências. Cada `Entry` possui identidade, label inicial e assinatura normalizada de parâmetros e resultados.
+
+A assinatura especifica parâmetros em ordem, modo de passagem, tipo e, para valores recebidos, o objeto inicializado na entrada. Resultados têm tipos e ordem declarados. Assinatura desconhecida é admissível somente com incerteza correspondente; o consumidor NÃO DEVE tratá-la como assinatura vazia.
+
+Uma unidade com corpo disponível DEVE possuir pelo menos uma entrada. Cada entrada aponta para uma sequência existente. Múltiplas entradas NÃO DEVEM ser fundidas sem preservar quais inicializações e parâmetros valem para cada uma. Conteúdo não alcançável de uma entrada pode ser alcançável de outra.
+
+Unidades contidas não herdam visibilidade por inferência. Uma captura ou referência a estado de outra unidade DEVE designar explicitamente um objeto visível e seu armazenamento. O produtor resolve visibilidade; o consumidor não repete lookup nominal.
+
+## 3. Sequências
+
+Uma `Sequence` é identificada por um `LabelId` e contém uma lista ordenada de zero ou mais operações comuns, seguida de exatamente um terminador. Um corpo disponível contém pelo menos uma sequência. A entrada no label inicia sua primeira operação, inclusive quando ela é apenas o terminador.
+
+A ordem de operações dentro da sequência é semântica. A ordem das sequências na publicação NÃO é ordem de execução. Não existe fallthrough implícito entre sequências. Um label não pode entrar no meio de uma sequência: quando necessário, ela deve ser dividida sem alterar as operações observadas.
+
+Uma sequência não precisa corresponder a uma construção-fonte ou a um bloco básico máximo. Dividir uma sequência em duas ligadas por `jump` é representação equivalente quando preserva operações, pontos observáveis e proveniência. O CFG pode conservar ou agrupar tais sequências sob um mapeamento explícito.
+
+## 4. Identidades
+
+Os domínios obrigatórios são `ArtifactId`, `UnitId`, `EntryId`, `LabelId`, `OperationId`, `OperandId`, `ObjectId`, `StorageId`, `ResourceId`, `OriginId`, `UncertaintyId` e `PremiseId`. Extensões podem acrescentar domínios, não reinterpretar os existentes.
+
+Cada identidade tem significado no namespace completo da publicação e de seu proprietário. Um número ou texto local isolado NÃO DEVE ser usado como chave global. Identidades de domínios diferentes NÃO são intercambiáveis, mesmo que tenham a mesma grafia.
+
+Uma operação pertence a exatamente uma sequência e unidade. Cada ocorrência de operando possui identidade própria, distinta da identidade do objeto que pode referenciar. Literais iguais podem ter identidades de ocorrência diferentes. Uma operação reutilizada em dois caminhos por referência ao mesmo label continua uma única operação; duas operações geradas separadamente exigem identidades distintas.
+
+Identidades IR são próprias. O produtor pode manter correlações opacas com sua entrada na proveniência, mas o consumidor NÃO DEVE exigir IDs, classes ou formatos de identidade de outro produto.
+
+## 5. Pontos de programa
+
+Um `ProgramPoint` identifica a posição semântica relativamente a uma operação:
+
+```text
+before(operation)
+after(operation, outcome)
+entry(unit, entryId)
+exit(unit, outcome)
+```
+
+Para atribuições e operações comuns, o resultado local é `normal`. Para interações, `outcome` identifica retorno normal, exceção ou outro resultado declarado. Um valor usado como alvo ou argumento é observado em `before(invoke)`, não após seus possíveis efeitos.
+
+Pontos não são números de linha, offsets de arquivo ou posições de travessia. Uma consulta que mistura resultados anteriores e posteriores à mesma operação é inválida. Identidade de ponto não promete que ele seja alcançável.
+
+## 6. Declarações de objetos
+
+Um `Object` é uma entidade nominal normalizada. Possui `ObjectId`, tipo de valor, origem, duração/visibilidade necessárias e uma associação declarativa de armazenamento, conforme [03 — Memória](03-memoria-e-aliases.md).
+
+Nome de exibição é opcional e não participa de joins. Dois objetos podem nomear a mesma célula ou vistas sobrepostas de uma região. Identidade nominal não prova independência física. Objetos de tipo desconhecido continuam presentes; operações sobre eles devem usar semântica compatível com o conhecimento disponível.
+
+## 7. Referências internas e externas
+
+Referências internas DEVEM fechar sobre a publicação. Uma referência externa DEVE ser um `ResourceRef` explícito, nunca um ID interno inexistente. Uma unidade referida mas sem corpo pode ser representada como recurso externo ou unidade declarada com corpo indisponível e contrato de interação.
+
+Um `ResourceRef` contém categoria, namespace de nomes, nome literal ou expressão que o calcula, política de interpretação do nome e origem. As categorias padrão são `program`, `service`, `file`, `table`, `schema` e `artifact`. Categorias adicionais exigem identificador qualificado de extensão.
+
+Um nome externo observado NÃO é identidade confirmada de um artefato executável. Resolução contra catálogo é produto separado. Um target interno usa `EntryId`; um target externo usa nome/namespace; um target dinâmico usa expressão tipada. Eles não devem ser confundidos.
+
+## 8. Relações de artefato
+
+`ArtifactRelation` possui identidade, origem, artefato de origem, destino interno ou recurso externo, espécie e cobertura. Espécies padrão: `includes`, `uses_schema` e `declares_resource`. A direção é do artefato que usa ou declara para o referenciado.
+
+Essas relações não possuem ponto de execução e NÃO DEVEM ser convertidas em invocações fictícias. Podem alimentar consumidores de dependências estruturais diretamente. Ausência de relações só prova inexistência quando o inventário pertinente está completo.
+
+## 9. Fechamento e revisões
+
+A publicação DEVE ser indivisível do ponto de vista de seus consumidores. Os fatos indispensáveis de um contrato externo devem estar materializados em tipos IR ou no limite conservador correspondente. `ContractRef` identifica autoridade/versão e evidência; uma referência sem conteúdo não substitui semântica disponível e não autoriza consulta preguiçosa ao produtor. Conhecimento adicional obtido posteriormente deve originar publicação/revisão ou produto derivado explicitamente correlacionado. Fatos de revisões diferentes não podem ser combinados apenas porque seus IDs locais coincidem. Uma análise derivada identifica `publicationId`, versão, perfis e premissas utilizadas.
+
+Para entradas e contexto semântico equivalentes, o produtor DEVE assegurar representação semanticamente determinística. Uma codificação pode estabelecer determinismo byte a byte em contrato separado. A V1 não exige estabilidade longitudinal de IDs após edições, normalizações diferentes ou mudança de versão.
