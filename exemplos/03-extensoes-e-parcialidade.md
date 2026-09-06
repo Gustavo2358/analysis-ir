@@ -114,7 +114,7 @@ cell @target : text
 
 O contrato ilustrativo dessa extensão deve definir seu payload e regra precisa antes de ser adotado. Um consumidor que desconhece a regra pode usar o envelope: x certamente sobrescreve target por resultado não interpretado e segue a next. Ele NÃO deve conservar Alpha como valor corrente exato nem executar a extensão e seu fallback como eventos distintos.
 
-O exemplo demonstra consumo conservador de extensão; não registra `sample.normalize_name` como capacidade padrão V1. Para consumidores precisos, a sua especificação externa é requerida.
+O exemplo demonstra consumo conservador de extensão; não registra `sample.normalize_name` como capacidade padrão V2. Para consumidores precisos, a sua especificação externa é requerida.
 
 ## X-27 — Identidades locais iguais em unidades diferentes
 

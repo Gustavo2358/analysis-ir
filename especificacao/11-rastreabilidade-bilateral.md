@@ -1,6 +1,6 @@
 # 11 — Rastreabilidade de requisitos pelos dois lados
 
-**Analysis IR 1.0.0 — Normativo**
+**Analysis IR 2.0.0 — Normativo**
 
 Cada linha estabelece um requisito de preservação. A ausência de uma informação no produtor ativa o tratamento indicado; não remove a necessidade do consumidor. Os IDs de oráculo referem-se ao [catálogo de conformidade](../conformidade/02-oraculos.md).
 
@@ -26,6 +26,7 @@ Cada linha estabelece um requisito de preservação. A ausência de uma informa�
 | B-18 — Artefatos | Relações sem execução | `ArtifactRelation` | Includes/schema sem CFG fictício | Cobertura estrutural parcial | O-65 |
 | B-19 — Extensão | Nova semântica tipada | Operação/capacidade com versão e envelopes | Consumo preciso ou fallback seguro | Incompatibilidade explícita | O-47, O-48 |
 | B-20 — Escala | Inventário completo e limites reais | Cardinalidade irrestrita, representação compacta | Consulta sob demanda e resultados honestos | `ANALYSIS_LIMIT` com restante | O-49, O-50, O-68 |
+| B-21 — Conhecimento de tipo | Domínio estabelecido ou lacuna localizada, entidades e usos conhecidos | `TypeRef` em objetos, células, locais, expressões, ocorrências e assinaturas | Distinguir tipo/valor desconhecidos de domínio de extensão; preservar usos sem inventar compatibilidade | `unknown_type`, leituras e envelopes; rejeição de precondição concreta não satisfeita | O-69 a O-81 |
 
 ## Critério de aceitação de nova capacidade
 

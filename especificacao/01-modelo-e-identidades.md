@@ -1,6 +1,6 @@
 # 01 — Modelo abstrato e identidades
 
-**Analysis IR 1.0.0 — Normativo**
+**Analysis IR 2.0.0 — Normativo**
 
 ## 1. Publicação
 
@@ -27,7 +27,7 @@ Uma publicação vazia é permitida apenas se seu escopo e a disponibilidade do 
 
 Uma `Unit` possui identidade, origem, contenção opcional, declarações visíveis, uma coleção de entradas e uma coleção de sequências. Cada `Entry` possui identidade, label inicial e assinatura normalizada de parâmetros e resultados.
 
-A assinatura especifica parâmetros em ordem, modo de passagem, tipo e, para valores recebidos, o objeto inicializado na entrada. Resultados têm tipos e ordem declarados. Assinatura desconhecida é admissível somente com incerteza correspondente; o consumidor NÃO DEVE tratá-la como assinatura vazia.
+A assinatura especifica parâmetros em ordem, modo de passagem, `TypeRef` e, para valores recebidos, o objeto inicializado na entrada. Resultados têm `TypeRef` e ordem declarados. Uma posição de tipo desconhecido usa `unknown_type(u)` sem apagar posição, modo ou objeto conhecidos. Isso é distinto de desconhecer a quantidade de posições ou a assinatura inteira. Assinatura desconhecida é admissível somente com incerteza correspondente; o consumidor NÃO DEVE tratá-la como assinatura vazia. As condições de transmissão são definidas em [04 — Operações](04-operacoes.md).
 
 Uma unidade com corpo disponível DEVE possuir pelo menos uma entrada. Cada entrada aponta para uma sequência existente. Múltiplas entradas NÃO DEVEM ser fundidas sem preservar quais inicializações e parâmetros valem para cada uma. Conteúdo não alcançável de uma entrada pode ser alcançável de outra.
 
@@ -68,7 +68,7 @@ Pontos não são números de linha, offsets de arquivo ou posições de travessi
 
 ## 6. Declarações de objetos
 
-Um `Object` é uma entidade nominal normalizada. Possui `ObjectId`, tipo de valor, origem, duração/visibilidade necessárias e uma associação declarativa de armazenamento, conforme [03 — Memória](03-memoria-e-aliases.md).
+Um `Object` é uma entidade nominal normalizada. Possui `ObjectId`, conhecimento de tipo de valor por `TypeRef`, origem, duração/visibilidade necessárias e uma associação declarativa de armazenamento, conforme [03 — Memória](03-memoria-e-aliases.md). `TypeRef` segue [02 — Tipos](02-tipos-valores-e-operandos.md): `known(T)` ou `unknown_type(u)` com lacuna `TYPE_UNKNOWN` explícita.
 
 Nome de exibição é opcional e não participa de joins. Dois objetos podem nomear a mesma célula ou vistas sobrepostas de uma região. Identidade nominal não prova independência física. Objetos de tipo desconhecido continuam presentes; operações sobre eles devem usar semântica compatível com o conhecimento disponível.
 
@@ -90,4 +90,4 @@ Essas relações não possuem ponto de execução e NÃO DEVEM ser convertidas e
 
 A publicação DEVE ser indivisível do ponto de vista de seus consumidores. Os fatos indispensáveis de um contrato externo devem estar materializados em tipos IR ou no limite conservador correspondente. `ContractRef` identifica autoridade/versão e evidência; uma referência sem conteúdo não substitui semântica disponível e não autoriza consulta preguiçosa ao produtor. Conhecimento adicional obtido posteriormente deve originar publicação/revisão ou produto derivado explicitamente correlacionado. Fatos de revisões diferentes não podem ser combinados apenas porque seus IDs locais coincidem. Uma análise derivada identifica `publicationId`, versão, perfis e premissas utilizadas.
 
-Para entradas e contexto semântico equivalentes, o produtor DEVE assegurar representação semanticamente determinística. Uma codificação pode estabelecer determinismo byte a byte em contrato separado. A V1 não exige estabilidade longitudinal de IDs após edições, normalizações diferentes ou mudança de versão.
+Para entradas e contexto semântico equivalentes, o produtor DEVE assegurar representação semanticamente determinística. Uma codificação pode estabelecer determinismo byte a byte em contrato separado. A V2 não exige estabilidade longitudinal de IDs após edições, normalizações diferentes ou mudança de versão.

@@ -23,7 +23,7 @@ cell @y : text
 ^entry:
   a: assign @x <- text("A")
   d: assign @y <- text("D")
-  b: assign choice([@x,@y], remainder=none, type=text) <- text("B")
+  b: assign choice([@x,@y], remainder=none, typeRef=known(text)) <- text("B")
   k: invoke program dynamic(read(@x))
 ```
 

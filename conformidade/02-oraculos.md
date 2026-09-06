@@ -1,10 +1,10 @@
 # Oráculos de conformidade
 
-**Analysis IR 1.0.0 — Normativo**
+**Analysis IR 2.0.0 — Normativo**
 
 ## Convenções
 
-Cada oráculo define comportamento de conformidade; não prescreve um framework ou uma implementação. Os exemplos associados são encontrados em [fluxo](../exemplos/01-fluxo-e-valores.md), [memória](../exemplos/02-memoria-e-chamadas.md) e [extensões](../exemplos/03-extensoes-e-parcialidade.md).
+Cada oráculo define comportamento de conformidade; não prescreve um framework ou uma implementação. Os exemplos associados são encontrados em [fluxo](../exemplos/01-fluxo-e-valores.md), [memória](../exemplos/02-memoria-e-chamadas.md), [extensões](../exemplos/03-extensoes-e-parcialidade.md) e [conhecimento de tipo](../exemplos/04-conhecimento-de-tipo.md).
 
 Quando se exige um conjunto exato, valem as premissas do cenário, o perfil preciso pertinente e o escopo de entradas explicitado. Consumers apenas conservadores podem produzir resultados mais amplos com limites declarados, mas não satisfazem por isso o perfil de precisão que exige aquele resultado. Os valores textuais exibidos sem aspas nesta tabela continuam literais de texto; IDs RD designam eventos, não valores.
 
@@ -553,3 +553,107 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 **Resultado obrigatório:** Os resultados são equivalentes no escopo ou explicam diferença de precisão/limite. Fato literal local não exige catálogo/CFG global irrelevante.
 
 **Falha a detectar:** Publicar resultado mais forte porque uma região relevante deixou de ser visitada sob demanda.
+
+## O-69 — Domínio conhecido do núcleo
+
+**Cenário:** X-31, objeto `@name` com `known(text)` e atribuição de literal textual.
+
+**Resultado obrigatório:** Objeto, célula, `object(@name)`, `read` e ocorrência de leitura conservam `known(text)`. A atribuição satisfaz I-08; o literal A é sustentado após a escrita.
+
+**Falha a detectar:** Perder o domínio ao propagá-lo entre declaração, local e operando, ou exigir frontend para identificá-lo.
+
+## O-70 — Domínio de extensão não é tipo desconhecido
+
+**Cenário:** X-31, objeto `@token` com `known(opaque_type(example.token,1))`, inclusive consumidor sem interpretação interna do domínio. Variante: cópia entre duas células desse mesmo domínio sob contrato de consumo conservador; contracaso: `concat(read(@token),text("A"))`.
+
+**Resultado obrigatório:** O domínio e a versão permanecem identificados; `havoc`, leitura e cópia de valor entre células compatíveis preservam esse domínio. A concatenação é `INVALID_IR`. Operações precisas de extensão exigem contrato/capacidade; ausência de suporte não vira `TYPE_UNKNOWN`.
+
+**Falha a detectar:** Tratar domínio opaco como tipo ausente, aceitar texto implicitamente, inventar igualdade não definida ou usar `opaque_type("unknown",1)` para uma lacuna de domínio.
+
+## O-71 — Entidade com domínio não estabelecido
+
+**Cenário:** X-31, objeto `@untyped` com `unknown_type(u)` e célula identificada. Variantes negativas: remover a lacuna `u` ou alterar seu código para um que não seja `TYPE_UNKNOWN`.
+
+**Resultado obrigatório:** O objeto e a célula permanecem presentes com origem e associação conhecidas; tipo desconhecido não implica storage/binding desconhecidos. As variantes negativas são `INVALID_IR` por I-02/I-49.
+
+**Falha a detectar:** Apagar declaração, fabricar célula por causa do tipo, perder a lacuna ou aceitar referência de tipo sem significado.
+
+## O-72 — Leitura de tipo desconhecido em operação neutra
+
+**Cenário:** X-32. Variante metamórfica: duas ocorrências de `read(@x)` em `knownOperands`, cada uma referenciada no envelope.
+
+**Resultado obrigatório:** Conservam-se `ObjectId`, `StorageId`, `TypeRef`, lacuna de tipo, razões aplicáveis ao conteúdo, origem da declaração e origem/identidade de cada ocorrência. A operação tem as leituras conhecidas e continuação declarada, sem escrita. Referir uma ocorrência no envelope não duplica o evento; duas ocorrências distintas não são fundidas.
+
+**Falha a detectar:** Substituir por `nop`, apagar a leitura, inventar escrita/recurso ou perder a distinção entre uso e declaração.
+
+## O-73 — Tipo desconhecido em aritmética
+
+**Cenário:** X-34, `add(read(@x),int(1))`; variantes `neg(read(@x))` e ambos argumentos de tipo desconhecido com a mesma lacuna.
+
+**Resultado obrigatório:** `INVALID_IR` por I-08. O domínio não é inferido do operador, do outro argumento ou do ID da lacuna. `add(unknown(known(int)),int(1))` é válido e mantém resultado de domínio `int` não determinado.
+
+**Falha a detectar:** Interpretar “tipo desconhecido” como dispensa de validação, assumir inteiro ou considerar as variantes positivas como tipo desconhecido.
+
+## O-74 — Tipo desconhecido em texto e booleanos
+
+**Cenário:** X-34, `concat(read(@x),text("A"))`, `not(read(@x))` e variante `branch read(@x)`.
+
+**Resultado obrigatório:** Cada contracaso é `INVALID_IR` por I-08. A variante booleana de X-33 é válida porque seu resultado é explicitamente `known(bool)` e tem pureza estabelecida; conserva a dependência de tipo desconhecido e ambos os destinos.
+
+**Falha a detectar:** Assumir `text`/`bool`, converter silenciosamente a dependência ou confundir desconhecimento do predicado com desconhecimento de seu tipo.
+
+## O-75 — Valor desconhecido de domínio conhecido
+
+**Cenário:** X-33, `p = unknown(known(text),[],none,v)`; variante de atribuição a célula `known(text)` em X-34.
+
+**Resultado obrigatório:** O domínio é `text`, o valor não é determinado e a razão de valor permanece. A atribuição é válida. Avaliações distintas não têm igualdade garantida. Não é necessário criar lacuna `TYPE_UNKNOWN`.
+
+**Falha a detectar:** Transformar `unknown` em literal, apagar a expressão, abrir o domínio sem motivo ou rejeitar uma operação apenas pelo valor desconhecido.
+
+## O-76 — Valor e domínio desconhecidos
+
+**Cenário:** X-33, `q = unknown(unknown_type(u),[read(@x)],none,v)`.
+
+**Resultado obrigatório:** As lacunas de tipo e valor são distinguíveis; a dependência, sua ocorrência e sua origem permanecem. `remainingReads=none` fecha a lista de leituras, não o domínio ou o conjunto de valores. Não se cria igualdade entre domínio/valor do resultado e da dependência.
+
+**Falha a detectar:** Substituir a referência de tipo pela razão de valor, perder dependências, inventar um domínio padrão ou interpretar ausência de candidatos como conjunto vazio fechado em ponto alcançável.
+
+## O-77 — Assign exige compatibilidade; abstração preserva a leitura
+
+**Cenário:** X-34, tentativas de `assign` com tipo desconhecido em um ou nos dois lados; variante `assign(@x,read(@x))`; abstração `transfer` com envelope explícito.
+
+**Resultado obrigatório:** As atribuições precisas são `INVALID_IR` por I-08, mesmo com o mesmo objeto/ID de lacuna. A abstração é válida e mantém leitura da origem, ocorrência de escrita e sobrescrita completa comprovada do destino. Não afirma cópia tipada exata. `assign` entre domínios conhecidos diferentes também continua inválido.
+
+**Falha a detectar:** Criar compatibilidade universal/implícita, inferir tipo por igualdade de lacunas ou substituir a abstração apenas por `havoc` apagando a leitura.
+
+## O-78 — Choice e binding preservam tipos próprios
+
+**Cenário:** X-35. Variantes: escolha fechada só de locais `known(text)`; escolha vazia fechada; candidato com tipo desconhecido; binding físico `unknown(scope,reason)` em objeto de tipo `known(text)`.
+
+**Resultado obrigatório:** A escolha homogênea fechada conserva `known(text)`; as heterogêneas ou sem garantia para o restante usam `unknown_type` preservando candidatos e seus domínios. `known(text)` sem essa garantia viola I-51; escolha vazia fechada é inválida para leitura/escrita. Binding físico desconhecido conserva `known(text)` do objeto.
+
+**Falha a detectar:** Escolher o primeiro candidato, tratar desconhecimento como conversão/união de tipos, perder tipos conhecidos ou misturar lacuna nominal/física com lacuna de domínio.
+
+## O-79 — Assinaturas parciais e precondições concretas
+
+**Cenário:** X-36 e seus contracasos. Variante positiva: parâmetro, argumento e resultado de mesmo domínio conhecido.
+
+**Resultado obrigatório:** A chamada parcial conserva posições, modos, `TypeRef`, leituras, alvo e outcomes conhecidos, sem alegar transmissão tipada precisa. Resultado desconhecido é escrito só no retorno normal. Argumento de tipo desconhecido para parâmetro `known(int)` e `return` de tipo desconhecido para resultado `known(text)` violam I-08; domínios conhecidos compatíveis satisfazem a transmissão precisa. Lacuna de tipo de uma posição não apaga aridade nem torna assinatura desconhecida uma assinatura vazia.
+
+**Falha a detectar:** Aceitar precondição concreta sem prova, tratar posição desconhecida como polimorfismo, fabricar argumento/resultado ou aplicar resultado normal na exceção.
+
+## O-80 — Havoc não muda o conhecimento do domínio
+
+**Cenário:** Célula exata `@x : unknown_type(u)` com conteúdo de entrada desconhecido; executar `havoc.must @x`. Variante independente: `havoc.may {@x}`. Demais locais são comprovadamente disjuntos.
+
+**Resultado obrigatório:** Ambas preservam `unknown_type(u)` e a razão de escrita. A primeira sobrescreve obrigatoriamente a célula; a segunda admite ausência de escrita. A lacuna de tipo não muda extensão, identidade ou independência já estabelecidas nem contamina locais disjuntos.
+
+**Falha a detectar:** Escolher domínio novo, converter o conteúdo, apagar escrita comprovada ou abrir todos os efeitos apenas por desconhecer o tipo.
+
+## O-81 — Domínio lógico e codec são conhecimentos distintos
+
+**Cenário:** Três variantes com mesmo intervalo físico válido e conhecido: vista com `text.ascii@1`; vista de domínio `known(text)` mas codec não interpretado; vista cujo domínio lógico e interpretação não são estabelecidos, com `unknown_type(u)`. Nas variantes incompletas, o cenário garante leitura total sem efeitos excepcionais.
+
+**Resultado obrigatório:** A primeira tem `known(text)`; a segunda conserva `known(text)` e `CODEC_UNKNOWN`; a terceira conserva `unknown_type(u)` e lacuna de interpretação. Intervalo, bytes e leitura conhecidos não desaparecem. Cópia bruta continua possível sob as precondições de `copy_bytes`. Se totalidade não estiver assegurada, a leitura exige operação com envelope de erro/controle apropriado. `assign` preciso sem domínio/codificação aplicáveis não é autorizado.
+
+**Falha a detectar:** Fazer codec desconhecido implicar sempre tipo desconhecido, escolher ASCII implicitamente, alegar `unknown_type` apesar de codec que estabelece domínio conhecido ou apagar fatos físicos independentes.

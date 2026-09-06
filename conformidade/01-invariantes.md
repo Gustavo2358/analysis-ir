@@ -1,6 +1,6 @@
 # Invariantes de conformidade
 
-**Analysis IR 1.0.0 — Normativo**
+**Analysis IR 2.0.0 — Normativo**
 
 ## 1. Classes de verificação
 
@@ -17,7 +17,7 @@ Uma verificação estrutural bem-sucedida não certifica automaticamente os inva
 | I-05 | Estrutural | Cada entrada de corpo disponível aponta para label existente na unidade. |
 | I-06 | Semântico | Ordem de sequências não implica execução; ordem de operações na sequência é preservada. |
 | I-07 | Estrutural | Um label identifica início de sequência, não uma posição intermediária oculta. |
-| I-08 | Estrutural | Tipos e cardinalidades dos operandos satisfazem a assinatura da operação quando conhecidos. |
+| I-08 | Estrutural | `TypeRef` e cardinalidades dos operandos satisfazem as precondições da assinatura. Uma exigência de domínio concreto `T` requer `known(T)`; `unknown_type` não a satisfaz nem dispensa validação. Posições/assinaturas parciais seguem o contrato conservador explícito de `invoke`. |
 | I-09 | Semântico | Expressão pura não oculta escrita, invocação, transferência ou saída excepcional. |
 | I-10 | Semântico | Avaliação e captura antecedem a escrita/efeito correspondente. |
 | I-11 | Estrutural | Cada ocorrência de operando é distinguível do objeto e dos demais usos. |
@@ -39,7 +39,7 @@ Uma verificação estrutural bem-sucedida não certifica automaticamente os inva
 | I-27 | Semântico | Fallback e operação original não são contados como duas execuções. |
 | I-28 | Estrutural | Inventário zero completo é distinto de inventário parcial/indisponível. |
 | I-29 | Semântico | Toda ocorrência coberta é publicada ou possui eliminação semanticamente justificada e rastreável. |
-| I-30 | Semântico | Unknown, unsupported e input missing não viram ausência silenciosa. |
+| I-30 | Semântico | Unknown value, unknown type, unsupported e input missing não viram ausência silenciosa. Tipo desconhecido conserva entidade, leitura, ocorrência, dependências, proveniência e lacunas aplicáveis, mas não autoriza operação que exige domínio conhecido (I-08). |
 | I-31 | Derivado | Resumo de completude não excede seus componentes relevantes no mesmo escopo. |
 | I-32 | Estrutural | Cada alegação de precisão possui dimensão e escopo identificáveis. |
 | I-33 | Derivado | Conjunto finito com restante aberto não é apresentado como exaustivo. |
@@ -58,6 +58,9 @@ Uma verificação estrutural bem-sucedida não certifica automaticamente os inva
 | I-46 | Semântico | Leitura/escrita com codec ou limite inválido não recebe conversão/recovery silencioso. |
 | I-47 | Semântico | Fronteira de controle aberta influencia todas as consultas potencialmente alcançadas por ela. |
 | I-48 | Derivado | Resultados de valores são avaliados no ponto da definição, não por reavaliação tardia de sua origem. |
+| I-49 | Estrutural | Cada conhecimento de domínio é `known(T)` ou `unknown_type(u)`; `u` fecha sobre lacuna `TYPE_UNKNOWN`. Objetos/células/aliases exatos compartilham seu `TypeRef`; locais, expressões, ocorrências e assinaturas seguem as regras de obtenção/preservação. |
+| I-50 | Semântico | Tipo, valor, storage, binding e falta de suporte a extensão são fatos distintos. `opaque_type` identifica domínio conhecido; desconhecimento não fabrica domínio, compatibilidade, conversão, disjunção ou igualdade. Compartilhar `UncertaintyId` não prova igualdade de domínios/valores. |
+| I-51 | Estrutural | `choice` só declara `known(T)` com o mesmo domínio assegurado em todos os candidatos e no restante; caso contrário usa `unknown_type`, conservando os tipos próprios dos candidatos. Escolha vazia fechada não é válida para leitura/escrita. |
 
 ## 2. Tratamento de falhas
 

@@ -1,6 +1,6 @@
 # 06 — Cobertura, incompletude e proveniência
 
-**Analysis IR 1.0.0 — Normativo**
+**Analysis IR 2.0.0 — Normativo**
 
 ## 1. Inventário de cobertura
 
@@ -25,6 +25,8 @@ As dimensões são `control`, `storage`, `effects`, `values` e `dependencies`. C
 `EXACT` em controle de `branch` significa regra de dois destinos conhecida, não verdade conhecida do predicado. `EXACT` em efeitos de `assign` significa semântica da atualização conhecida, não destino físico necessariamente resolvido; nesse caso storage pode permanecer aberto.
 
 Nenhuma dimensão é elevada por outra. Um literal conhecido não resolve automaticamente o recurso externo ao qual ele dará nome. Uma origem exata não torna um valor exato. Um CFG completo estruturalmente não torna os efeitos completos.
+
+O conhecimento de domínio é representado por `TypeRef`, não por um novo estado global de precisão. `unknown_type` limita a interpretação de valores, mas não abre automaticamente storage, efeitos, controle ou dependências. Uma alegação local de leitura exata pode conservar domínio desconhecido; ela não alega valor ou tipo concreto conhecido.
 
 Uma síntese global não deve ser mais forte que os fatos relevantes para o mesmo escopo e dimensão. `NOT_APPLICABLE` é excluído da combinação, não usado para esconder lacuna. Alegações locais podem ser melhores que a síntese global quando sua independência estiver demonstrada.
 
@@ -59,6 +61,18 @@ Cada lacuna possui identidade, código estável, domínio afetado, âncora/escop
 Códigos mínimos: `INPUT_MISSING`, `REFERENCE_UNRESOLVED`, `REFERENCE_AMBIGUOUS`, `TYPE_UNKNOWN`, `STORAGE_UNKNOWN`, `ALIAS_UNKNOWN`, `CODEC_UNKNOWN`, `PREDICATE_UNKNOWN`, `CONTROL_UNKNOWN`, `EFFECT_UNKNOWN`, `RESOURCE_TARGET_UNKNOWN`, `CONTRACT_UNKNOWN`, `EXTENSION_UNSUPPORTED`, `ANALYSIS_LIMIT`, `EXTERNAL_VALUE_UNKNOWN`, `ENTRY_STATE_UNKNOWN`, `UNINITIALIZED_READ` e `SOURCE_SEMANTICS_UNAVAILABLE`.
 
 `EXTERNAL_VALUE_UNKNOWN` e `UNINITIALIZED_READ` não significam input-fonte ausente: um programa completamente representado pode receber valores externos ou ler estado não inicializado. `INPUT_MISSING` identifica falta de um artefato/fato de entrada necessário à produção; esses estados não devem ser confundidos nas métricas de cobertura.
+
+`TYPE_UNKNOWN` ancora `unknown_type(u)` e significa domínio de valor não estabelecido. O código isolado em diagnóstico não substitui o `TypeRef` normativo. As dimensões abaixo são independentes e suas lacunas aplicáveis DEVEM coexistir:
+
+| Situação | Representação e limite |
+| --- | --- |
+| Valor desconhecido, domínio conhecido | `unknown(known(T),...,reason)`; razão de valor |
+| Domínio desconhecido | `unknown_type(u)` com `TYPE_UNKNOWN`; pode acompanhar `read` ou `unknown` |
+| Associação física desconhecida | Binding `unknown(scope,reason)` com `STORAGE_UNKNOWN`; conserva tipo conhecido se disponível |
+| Binding nominal não resolvido/ambíguo | `choice`/referência aberta com `REFERENCE_UNRESOLVED` ou `REFERENCE_AMBIGUOUS`; preserva candidatos e seus tipos |
+| Domínio de extensão identificado | `known(opaque_type(id,version))`; falta de interpretação usa `EXTENSION_UNSUPPORTED`, não `TYPE_UNKNOWN` |
+
+Em `unknown(unknown_type(u),...,reason)`, `u` explica a lacuna de tipo e `reason` explica a de valor. Origens e causas podem estar relacionadas, mas nenhum desses fatos substitui o outro. Em `read(p)`, preservam-se a lacuna de tipo de `p` e as razões aplicáveis ao conteúdo/armazenamento; não se inventa desconhecimento de binding porque o domínio não foi estabelecido.
 
 Implementações podem acrescentar códigos qualificados, mas não redefinir os existentes. Um desconhecimento de target não deve ser registrado como falha de binding do objeto que contém o nome.
 

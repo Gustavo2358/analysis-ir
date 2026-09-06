@@ -1,6 +1,6 @@
 # 08 — Contrato de CFG, efeitos, dataflow e dependências
 
-**Analysis IR 1.0.0 — Normativo**
+**Analysis IR 2.0.0 — Normativo**
 
 ## 1. Regras comuns
 
@@ -81,7 +81,11 @@ Os valores enumerados são candidatos justificados pelas regras abstratas e pela
 
 ### 5.1 Significado do resultado
 
-Para tipo `T`, resultado finito fechado `V` representa valores contidos em `V`. Resultado `(V, unknownRemainder=true)` admite outros valores de `T` e conserva `V` como evidência enumerada. Do ponto de vista puramente denotacional, o restante aberto pode representar todo `T`; conservar `V` acrescenta rastreabilidade, não restringe indevidamente esse domínio.
+Para `TypeRef=known(T)`, resultado finito fechado `V` representa valores contidos em `V`. Resultado `(V, unknownRemainder=true)` admite outros valores de `T` e conserva `V` como evidência enumerada. Do ponto de vista puramente denotacional, o restante aberto pode representar todo `T`; conservar `V` acrescenta rastreabilidade, não restringe indevidamente esse domínio.
+
+Para `unknown_type(u)`, o consumidor conserva a lacuna de domínio e não interpreta o restante como pertencente a `int`, `text`, `bytes` ou a uma extensão escolhida por conveniência. Candidatos sustentados, por exemplo por alternativas de `choice` de tipos conhecidos distintos, conservam seus próprios domínios e evidência. Um resultado fechado exige justificar exaustividade também dessas alternativas; ausência de candidatos com domínio desconhecido em ponto alcançável não significa conjunto vazio fechado. Refinamento derivado de conhecimento não altera retroativamente o `TypeRef` da publicação nem valida operação que violava uma precondição.
+
+Conhecer o domínio de `opaque_type` sem interpretar a extensão mantém a identidade desse domínio e o modo de consumo negociado. Não deve ser relatado como domínio não identificado. Em todos os casos, leituras, ocorrências, aliases e origens conhecidos permanecem disponíveis, independentemente da precisão dos valores.
 
 Conjunto vazio fechado em ponto alcançável só é válido se o domínio consultado realmente não admite valor; normalmente indica inconsistência. Ponto inalcançável possui estado próprio. Falta de inicialização e entrada externa geram valor desconhecido, não conjunto vazio fechado.
 
@@ -134,7 +138,7 @@ Uma consulta DEVE declarar se enumera dependências diretas dos sites e artefato
 
 ## 7. Análises adicionais
 
-O CFG e a proveniência podem alimentar dominância, pós-dominância, dependência de controle ou slicing como produtos separados. Saídas anormais, divergência, múltiplas entradas e fronteiras abertas devem entrar no escopo dessas análises. A IR V1 não publica esses resultados nem pressupõe um algoritmo único.
+O CFG e a proveniência podem alimentar dominância, pós-dominância, dependência de controle ou slicing como produtos separados. Saídas anormais, divergência, múltiplas entradas e fronteiras abertas devem entrar no escopo dessas análises. A IR V2 não publica esses resultados nem pressupõe um algoritmo único.
 
 ## 8. Escala e execução sob demanda
 
