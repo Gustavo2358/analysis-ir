@@ -2,6 +2,8 @@
 
 **Versão:** 2.0.0
 
+**Estado da edição:** fechamento normativo antes da publicação estabilizada, conforme a [política de versionamento](especificacao/09-extensibilidade-e-compatibilidade.md#52-fechamento-do-modelo-antes-da-estabilização-da-200). Snapshots de trabalho exigem reconciliação/revalidação; não são releases implicitamente compatíveis.
+
 **Natureza:** especificação de representação intermediária para análise estática  
 **Idioma:** português; identificadores semânticos em inglês  
 **Escopo:** programas imperativos sequenciais, memória mutável, controle explícito e observação de dependências
@@ -11,6 +13,8 @@ Esta edição corrige a lacuna de tipos desconhecidos da 1.0.0: `TypeRef` distin
 O conhecimento relacional é independente: `sameDomain(a,b)` pode comprovar um domínio comum ainda não identificado, por identidade, alias exato ou premissa/contrato explícito. Essa prova permite preservar cópias e transmissões de valor sem conversão, mas não fornece aritmética, concatenação ou outras operações que interpretam o domínio. Os oráculos distinguem obrigações estruturais e escalares por identificadores próprios.
 
 Os [escopos de provas de domínio](especificacao/02-tipos-valores-e-operandos.md#14-escopo-de-provas-de-domínio) têm formas estáticas fechadas e regras explícitas de aplicabilidade/interseção, sem depender de ativações dinâmicas. Premissas sobre uma ocorrência inteira de `choice` quantificam sobre candidatos e todo o restante aberto.
+
+O [Analysis IR JSON Binding 1.0.0](bindings/json-v1.md) **targets AIR 2.0.0** e permanece **DRAFT**, inclusive após o merge do PR que o introduz. **Transport contract != semantic version.** O modelo oficial está em `especificacao/` e `conformidade/`; JSON apenas o codifica. `ContractRef` identifica autoridade/versão/evidência, com assinatura e conteúdo materializados no `invoke`, sem inventário top-level de contratos ou lookup tardio. A [revisão e handoff](bindings/revisao-json-v1.md) registra a reconciliação necessária em `air-java`, que não governa a AIR.
 
 ## Propósito
 
@@ -43,11 +47,13 @@ A V2 fixa um núcleo de operações sobre estado mutável e transferências expl
 | [Conhecimento de tipo](exemplos/04-conhecimento-de-tipo.md) | Domínios conhecidos, extensão, tipo/valor desconhecidos e precondições | Informativa |
 | [Invariantes](conformidade/01-invariantes.md) | Regras de validade e falhas detectáveis | Normativa |
 | [Oráculos](conformidade/02-oraculos.md) | Cenários de conformidade com resultados esperados | Normativa |
+| [JSON Binding 1.0.0](bindings/json-v1.md) | Codificação de AIR 2.0.0; versão de transporte independente | DRAFT |
+| [Revisão do binding e handoff](bindings/revisao-json-v1.md) | Decisões, evidência e mudanças futuras em air-java | Informativa |
 | [Referências](REFERENCIAS.md) | Fundamentos e fontes conceituais | Informativa |
 
 ## O que significa “V2 completa”
 
-O conjunto define integralmente o vocabulário, a semântica, as regras de validade, os envelopes de desconhecimento, os perfis e os critérios de conformidade da versão 2.0.0. Não significa cobertura integral de qualquer linguagem ou precisão perfeita para todo programa. Uma publicação pode ser válida e explicitamente parcial. Uma implementação pode declarar apenas os perfis que satisfaz.
+O conjunto define o vocabulário, a semântica, as regras de validade, os envelopes de desconhecimento, os perfis e os critérios de conformidade da edição 2.0.0 em fechamento. “Completa” descreve o alcance do modelo, não uma declaração de release estabilizada ou aceitação de um binding. Não significa cobertura integral de qualquer linguagem ou precisão perfeita para todo programa. Uma publicação pode ser válida e explicitamente parcial. Uma implementação pode declarar apenas os perfis que satisfaz.
 
 O núcleo inclui representações conservadoras para fatos indisponíveis. As extensões padronizadas `memory.regions@1`, `control.local@1` e `control.indirect@1` têm semântica definida nesta versão, mas sua implementação não é exigida do perfil escalar. Um consumidor que não as interprete deve usar o fallback normativo ou emitir incompatibilidade explícita.
 

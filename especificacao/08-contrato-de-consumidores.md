@@ -126,7 +126,7 @@ Resolver um nome contra um catálogo é passo distinto. Um nome de arquivo lógi
 
 ### 6.2 Extração especializada
 
-Consumidores especializados podem consultar valores de argumentos ou fatias de regiões e aplicar contratos de recursos/protocolos. DEVEM reutilizar os produtos canônicos de CFG, storage, efeitos e valores. Não podem reconstruir fluxo por texto nem escolher a última atribuição aparente.
+Consumidores especializados podem consultar valores de argumentos ou fatias de regiões e aplicar contratos de recursos/protocolos. DEVEM reutilizar os produtos canônicos de CFG, storage, efeitos e valores. Não podem reconstruir fluxo por texto nem escolher a última atribuição aparente. Uma autoridade especializada adicional pertence às premissas/versionamento da consulta derivada; não completa por lookup um `ContractRef` da publicação original. Se a regra for publicada como semântica de IR, deve ter manifesto de extensão negociado ou redução para conceitos existentes.
 
 O resultado conserva targets enumerados e restante desconhecido. A IR não contém regras proprietárias de nomeação ou campos de protocolos específicos; contém os operandos, regiões e sites suficientes para essas interpretações.
 

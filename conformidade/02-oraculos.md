@@ -556,7 +556,7 @@ As projeções estruturais dos oráculos anteriores são delimitadas abaixo. Ela
 
 **Cenário:** X-15.
 
-**Resultado obrigatório:** Com contrato especializado aplicável, a fatia e a regra de padding permitem target PGMA; sem contrato, só ROUTER e os valores do argumento são sustentados.
+**Resultado obrigatório:** Com contrato especializado aplicável e declarado na consulta derivada, a fatia e a regra de padding permitem target PGMA; sem contrato, só ROUTER e os valores do argumento são sustentados.
 
 **Falha a detectar:** Inferir dependência indireta por offset habitual ou interpretar protocolo dentro do core.
 
@@ -791,3 +791,55 @@ As projeções estruturais dos oráculos anteriores são delimitadas abaixo. Ela
 **O-85-STRUCT:** Interpretar exatamente os sites e formas de `DomainProofScope` definidos em 02, §1.4. Para `copy` de `U`, `publication ∩ operation(copy)`, `unit(U) ∩ operation(copy)` e suas composições finitas cobrem `operation_site(copy)`; `operation(other) ∩ operation(copy)`, `unit(V) ∩ operation(copy)` e `entry(eU) ∩ operation(copy)` são vazios. Só as primeiras variantes sustentam a cópia quando não há outra prova. `operation(k) ∩ invocation(k)` cobre a transmissão em `k`, não a avaliação local, outra chamada, entrada ou corpo do chamado. `unit(U)` cobre seus próprios sites, sem propagar-se a unidades contidas/chamadas; `publication` cobre todos os sites, sem dispensar a correspondência dos sujeitos. Rejeitar IDs inexistentes/de domínio incorreto, `invocation` de não-`invoke`, formas não admitidas e composição não finita, mesmo em premissa não utilizada. Preservar a quantificação universal sobre execuções e a distinção dos vínculos chamador/chamado, sem inferir alcançabilidade, igualdade de ativações ou um escopo dinâmico. Uma interseção vazia bem formada é admitida, mas seu uso como única prova viola I-08/I-52. Esses resultados não exigem calcular CFG, efeitos, RD ou valores.
 
 **Falha a detectar:** Tratar escopo como texto livre, substituir interseção vazia por ancestral comum, estender escopo de entrada ao corpo ou de chamada ao chamado, reutilizar vínculo de outra chamada/ocorrência, aceitar `activation(...)` ou delegar aplicabilidade a uma análise de execução.
+
+## O-86 — Contrato fechado sem inventário externo
+
+**Cenário:** X-41; variante com `ContractRef` desconhecido e assinatura parcial; contracasos com origem inexistente, referência a posição não materializada e assinatura interna apontando para entrada diferente do target.
+
+**O-86-STRUCT:** Preservar assinatura externa por `invoke`, posições, modos, `TypeRef`, limites, outcomes, autoridade/versão/evidência e premissas aplicáveis. Retirar acesso ao produtor/autoridade não altera os fatos disponíveis. Os contracasos violam I-02/I-55. Contrato conhecido com assinatura parcial permanece parcial; contrato desconhecido conserva fatos independentes e `CONTRACT_UNKNOWN`. Não admitir `ContractId`, inventário `contracts` ou lookup para completar conteúdo como formas do núcleo. Duas chamadas com mesma evidência mantêm sujeitos externos distintos; uma prova em `k` não valida `k2`.
+
+**Falha a detectar:** Referência contratual “mágica”, aridade desconhecida convertida em zero, ID de implementação exigido para interpretar assinatura ou prova reutilizada por igualdade da autoridade.
+
+## O-87 — Recurso declarado não é target de execução
+
+**Cenário:** Um recurso declarado descreve o nome literal `billing`; dois sites usam esse nome com origens próprias. Variante interna aponta para uma entrada declarada sem corpo. Contracaso usa `ResourceId` no campo de target interno ou como quarta variante executável.
+
+**O-87-STRUCT:** Conservar os dois sites e suas origens, nome/categoria/namespace/política e restante contratual; não inferir existência de artefato. Target interno fecha sobre `EntryId` e conserva assinatura/corpo indisponível. Contracaso viola I-57, mesmo que a declaração de recurso exista. Nome calculado referencia sua avaliação na operação; declaração de recurso não o captura nem cria execução. Relação de artefato não recebe avaliação dinâmica fictícia.
+
+**Falha a detectar:** Resolver recurso declarado como entrada, fundir usos pela descrição compartilhada ou reavaliar uma expressão sem ponto de execução.
+
+## O-88 — Disjunção como fato bilateral
+
+**Cenário:** X-14 com `disjoint_storage({base(target),base(scratch)})`, autoridade e origem do cenário. Contracasos estruturais: base inexistente, repetida, conjunto com menos de duas bases ou escopo seletivo. Variante incompleta remove a premissa sem fornecer outra prova. Outra variante faz um destino aberto poder alcançar `target`, além de `scratch`.
+
+**O-88-STRUCT:** Preservar a premissa par a par universal, seus sujeitos e evidência; rejeitar os contracasos por I-02/I-58. Remover a premissa não torna a publicação estruturalmente inválida por si só, mas remove a garantia de independência. Não transformar `ObjectId` em base nem transportar separação de uma escolha para seu restante. Verificar forma não certifica a verdade física da premissa.
+
+**O-88-SCALAR:** Sob a garantia válida de X-14, a escrita limitada a `scratch` conserva `KNOWN` em `target`, como O-15. Sem prova ou com destino aberto que possa alcançar `target`, não afirmar o mesmo resultado fechado por IDs distintos.
+
+**O-88-REGION:** Vistas não sobrepostas da mesma região podem ser separadas pelos intervalos existentes, sem exigir uma premissa entre bases distintas.
+
+**Falha a detectar:** Fabricar independência para validar um exemplo, exigir premissa redundante para intervalos já disjuntos ou usar a premissa como garantia de tipo/codec.
+
+## O-89 — Precondição sem token de Validator
+
+**Cenário:** Recorte literal de texto dentro dos limites e sua variante fora dos limites; acesso puro cuja totalidade é sustentada pelo produtor; escolha aberta com premissa universal de O-84; igualdade de extensão cujo manifesto define ou não a operação. Um validador pode ter capacidade limitada para avaliar evidência não literal.
+
+**O-89-STRUCT:** O recorte válido não exige `boundsProof` ou `SafetyAssertion`. Contradição literal de limites é rejeitada por I-09/I-46, mesmo acompanhada de token de “segurança”. Preservar a garantia de escolha pelo sujeito/escopo normativo, sem `knownRemainderDomainProof`. A igualdade de extensão depende do manifesto; token `EXTENSION_EQUALITY_DEFINED` não o substitui. As formas privadas de safety não são asserções do núcleo. Quando a verdade de uma precondição não puder ser verificada, registrar obrigação/limite explícito, sem declarar que a precondição foi provada ou inventar análise de valores.
+
+**Falha a detectar:** Certificar semântica por enum de implementação, rejeitar forma válida apenas por ausência de certificado privado ou apagar precondição ao remover a classe.
+
+## O-90 — Envelopes conservam a espécie de continuação
+
+**Cenário:** `invoke` com retorno normal, exceção específica, catch-all, halt, divergência e restante; `opaque` com saltos locais e saída normal da unidade; `copy_bytes` comum com fallback que continua na operação seguinte. Contracasos duplicam normal/tag/catch-all de invocação, usam label de outra unidade, repetem chave de efeito ou colocam `continue` em terminador.
+
+**O-90-STRUCT:** Preservar cada alternativa e restante sem fundir `InvocationOutcomes` com as permissões do envelope genérico. Rejeitar os contracasos por I-02/I-60. `continue` do fallback comum não exige nova sequência nem constitui segunda execução. `return` do envelope sai da unidade; `normal(label)` conserva destino local. O limite `otherwise` cobre outcomes sem limite específico e o restante aberto; ausência de informação não vira `none`. Este oráculo verifica fatos/regras de controle e não calcula CFG, efeitos ou valores.
+
+**Falha a detectar:** Introduzir fallthrough em `opaque`, tratar saída da unidade como label normal ou perder fallback de operação comum por só saber representar destinos em labels.
+
+## O-91 — Identidade e contrato abstrato independem de implementação
+
+**Cenário:** Relações de artefato distintas, operandos em operações e em condições de entrada, e um `return` compartilhado por múltiplas entradas. Renomear detalhes privados de uma implementação e remover seus certificados não muda os fatos AIR. Variante troca o domínio/proprietário de uma referência de relação/operando.
+
+**O-91-STRUCT:** Identificar relações por `ArtifactRelationId`, fechar proprietários e rejeitar a referência trocada por I-01/I-02/I-11. `ContractRef` não adquire ID por internamento em memória. O retorno conserva valores e a regra da ativação corrente, sem seletor `entryScope`; limite em validar compatibilidade de múltiplas entradas é registrado, sem eliminar execuções. Mudança de classes, representação de números ou transporte não redefine validade. Inteiros não recebem limite de um runtime pelo modelo abstrato.
+
+**Falha a detectar:** Exigir identidade Java para fechar fato, misturar ocorrências pelo objeto lido, selecionar entradas para fazer a validação passar ou alterar semântica pela codificação.

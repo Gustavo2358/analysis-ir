@@ -26,6 +26,20 @@ Células com identidades distintas representam armazenamento independente **apen
 
 Uma célula admite atualização completa atômica. Escrita parcial em célula sem decomposição não é precisa: deve ser representada em uma região, transformada em leitura-modificação-escrita com semântica comprovada ou abstraída conservadoramente.
 
+### 3.1 Evidência declarativa de separação
+
+A necessidade de independência já é semântica do núcleo: o produtor estabelece separação física, e o consumidor precisa saber se uma escrita limitada pode afetar outro local (B-08/B-14, O-14/O-15). Associações `cell`, `alias`, `alternatives` e `unknown` não afirmam, sozinhas, separação entre bases distintas. Para materializar essa garantia sem depender de texto de diagnóstico, a premissa tipada é:
+
+```text
+disjoint_storage(storage: conjunto de StorageId)
+```
+
+O conjunto contém pelo menos duas identidades distintas de células/regiões existentes. Afirma disjunção **par a par entre bases diferentes**, em todas as instâncias simultaneamente existentes admitidas pela publicação, respeitando duração e contexto. Não afirma disjunção entre duas instâncias da mesma base nem entre vistas sobrepostas de uma base. Não é uma prova de tipo, codec, valor ou confinamento.
+
+Essa premissa tem `PremiseId`, autoridade, justificativa e origem conforme [06, §5.1](06-incompletude-e-proveniencia.md#51-premissas-e-obrigações-de-validação). Seu escopo é sempre a publicação; não há campo de escopo arbitrário, condição de caminho ou `DomainProofScope`. Uma garantia que só vale num caminho não satisfaz esta forma. Sem garantia universal, preservam-se associações/escopos abertos ou usa-se extensão negociada; não se fabricam bases independentes.
+
+Vistas não sobrepostas de uma mesma região já são separáveis por intervalos conhecidos e não exigem essa premissa. Um alias exato conserva a base de seu objeto; não ganha separação por nome. Uma escolha/associação aberta pode continuar abrangendo uma base de outro objeto mesmo quando suas alternativas enumeradas sejam separadas. Contradição com fatos físicos conhecidos é inválida. O validador verifica forma e contradições decidíveis; a verdade da separação continua obrigação da autoridade, não produto de uma validação bem-sucedida.
+
 ## 4. Associações declarativas
 
 Cada objeto possui uma das seguintes associações:
