@@ -1,6 +1,6 @@
 # 05 — Semântica de controle e invocações
 
-**Analysis IR 1.0.0 — Normativo**
+**Analysis IR 2.0.0 — Normativo**
 
 ## 1. Modelo de transição
 
@@ -10,7 +10,7 @@ A ordem física de sequências é irrelevante. Não há successor criado apenas 
 
 ## 2. Bifurcação e reconvergência
 
-`branch(p,t,f)` pode produzir `t` quando `p=true` e `f` quando `p=false`. Se `p` é abstratamente desconhecido, ambos são admitidos. A reunião de caminhos ocorre porque suas transferências alcançam uma continuação comum, não porque a IR armazena um “join calculado”.
+`branch(p,t,f)` exige `TypeRef=known(bool)` e pode produzir `t` quando `p=true` e `f` quando `p=false`. Se o valor de `p` é abstratamente desconhecido, ambos são admitidos; `unknown_type` não é um predicado booleano válido. A reunião de caminhos ocorre porque suas transferências alcançam uma continuação comum, não porque a IR armazena um “join calculado”.
 
 Um ramo vazio deve transferir para a continuação apropriada. Ramo que retorna, termina ou diverge não ganha aresta artificial de reconvergência. Uma construção estruturada pode ser normalizada em múltiplas sequências, preservando em origem o vínculo entre elas.
 
@@ -117,6 +117,8 @@ indirect.jump(target: Expression<label(S)>, within: S)
 ```
 
 Avalia `target` e transfere ao label resultante. O limite `S` é parte do tipo e do contrato, não um resultado inferido de dataflow. Na ausência de valor refinado, o CFG admite todos os labels de `S`. A operação não modifica memória; a leitura do target é identificável.
+
+Essa assinatura exige `known(label(S))`. `unknown(known(label(S)),...)` mantém o universo `S`; `unknown_type(u)` não estabelece esse universo e não permite `indirect.jump` preciso. O limite `within` sozinho não converte um operando de tipo desconhecido em label.
 
 Uma análise posterior pode reduzir os destinos por valores possíveis, desde que preserve o restante desconhecido e a consistência da revisão de CFG utilizada. O CFG conservador inicial não depende de um cálculo prévio de reaching definitions, evitando dependência circular.
 

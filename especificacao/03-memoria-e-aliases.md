@@ -1,6 +1,6 @@
 # 03 — Armazenamento, regiões e aliases
 
-**Analysis IR 1.0.0 — Normativo**
+**Analysis IR 2.0.0 — Normativo**
 
 ## 1. Separação de identidades
 
@@ -18,7 +18,9 @@ Cada armazenamento conhecido tem duração `activation`, `persistent` ou `extern
 
 ## 3. Células abstratas — núcleo
 
-Uma `Cell` contém exatamente um valor de um tipo. Seu tamanho em bytes não é definido. Uma associação `object → cell` permite análise escalar sem exigir representação física.
+Uma `Cell` contém exatamente um valor de um domínio, cujo conhecimento é declarado por `TypeRef`. `unknown_type(u)` não transforma a célula em armazenamento de tipo dinâmico/universal; apenas deixa seu domínio não estabelecido. Seu tamanho em bytes não é definido. Uma associação `object → cell` permite análise escalar sem exigir representação física. Objeto e célula associados sem conversão compartilham o mesmo `TypeRef`; um alias exato também o conserva. Se o domínio estiver estabelecido nessa associação, todos conservam `known(T)`. Reutilizar uma lacuna entre células distintas não prova compatibilidade de seus domínios.
+
+Identidade de objeto/célula e alias exato da mesma vista sustentam `sameDomain` independentemente de identificar o domínio concreto. Assim, uma cópia de valor entre esses sujeitos não precisa perder sua relação de valor por `TYPE_UNKNOWN`. Sobreposição de bytes, alias possível ou identidade de região com vistas diferentes não fornecem essa prova. Escritas mudam conteúdo, não o domínio estável declarado da célula; nenhuma dessas regras presume codec ou conversão.
 
 Células com identidades distintas representam armazenamento independente **apenas quando essa separação foi estabelecida pelo produtor ou declarada como premissa rastreável**. O produtor NÃO DEVE criar células distintas para contornar um layout ou alias desconhecido. Dois objetos que nomeiam o mesmo armazenamento DEVEM compartilhar a célula, possuir relação de alias explícita ou permanecer abertos.
 
@@ -36,7 +38,7 @@ Cada objeto possui uma das seguintes associações:
 | `alternatives(bindings, remainder)` | Conjunto de associações possíveis, possivelmente aberto |
 | `unknown(scope, reason)` | Associação não determinada dentro do escopo |
 
-`alias` não pode formar ciclo sem um armazenamento-base resolúvel. Uma relação de sobreposição conhecida, mas sem offset conhecido, não deve virar `alias` exato; usa alternativas/restrições abertas. Conflitos de tipo, duração ou limites são invalidez ou incerteza explícita, nunca motivo para selecionar silenciosamente uma associação.
+`alias` não pode formar ciclo sem um armazenamento-base resolúvel. Uma relação de sobreposição conhecida, mas sem offset conhecido, não deve virar `alias` exato; usa alternativas/restrições abertas. Fatos conhecidos contraditórios de tipo, duração ou limites são inválidos; lacunas reais usam incerteza explícita, nunca seleção silenciosa de uma associação. Desconhecimento de associação não implica desconhecimento de tipo, e `unknown_type` não substitui `unknown(scope, reason)`. Em `alternatives`, o domínio comum segue a regra de `choice`; domínios próprios dos candidatos são preservados.
 
 ## 5. Regiões de bytes — `memory.regions@1`
 
@@ -58,6 +60,8 @@ A unidade de offset físico é sempre **octeto**. Caractere lógico, elemento de
 | `signed.twos_complement@1(width, order)` | `int` | Mesmas restrições de largura; domínio `-2^(width-1)..2^(width-1)-1` |
 
 Codecs adicionais são extensões versionadas. Não há codificação ambiental padrão. Um codec desconhecido preserva bytes e identidade, mas bloqueia a decodificação exata; não bloqueia automaticamente uma cópia bruta de bytes.
+
+O domínio lógico estabelecido de uma vista é `known(T)`, mesmo se sua codificação não puder ser interpretada. Os codecs padronizados acima estabelecem seus domínios conhecidos. Se o próprio domínio lógico não foi estabelecido, a vista usa `unknown_type(u)` e conserva os fatos físicos conhecidos; não pode alegar um codec que estabeleça domínio contraditório. `region_slice` obtém o mesmo `TypeRef` desse contrato lógico. Uma leitura com interpretação indisponível só conserva a forma pura `read` se totalidade e ausência de efeitos excepcionais estiverem asseguradas; caso contrário, exige abstração por operação com envelope. Uma escrita precisa por codec continua exigindo domínio conhecido e codificação aplicável.
 
 Leitura de sequência inválida para o codec ou escrita fora de seu domínio exige caminho de erro/abstração explícita. O produtor só pode usar operação pura e total sobre um domínio cuja validade esteja assegurada. Texto não representável não deve ser substituído automaticamente por `?`.
 
@@ -82,6 +86,8 @@ Quando várias entradas têm estados iniciais diferentes, a distinção deve ser
 Um `EntryState` é um inventário por entrada de condições iniciais de armazenamento, com origem/premissa. Cada condição associa um local a `literal(value)`, `parameter(position)`, `preserve`, `external_unknown` ou `uninitialized`. `parameter` captura o argumento de valor da ativação; um parâmetro por referência associa o objeto ao local recebido, sem criar cópia independente. `preserve` conserva armazenamento persistente/externo existente, cuja abstração inicial pode ser desconhecida. `uninitialized` indica ausência de valor inicial assegurado, não um literal zero.
 
 Condições não fornecidas são abertas: para células novas, valor não inicializado/desconhecido; para estado persistente/externo, conteúdo preservado não determinado. Condições iniciais sobre aliases ou vistas sobrepostas DEVEM ser consistentes entre si. Dois literais incompatíveis para o mesmo byte/célula na mesma entrada constituem premissas contraditórias e não podem ser conciliados por ordem do inventário.
+
+`external_unknown` e `uninitialized` conservam o `TypeRef` do local; não fazem seu tipo virar desconhecido. Um literal inicial conserva seu domínio conhecido e exige `sameDomain` com o local, além das condições de representação aplicáveis; uma anotação `unknown_type` sozinha não prova compatibilidade. A inicialização precisa por parâmetro obedece às condições de transmissão da assinatura, inclusive prova de mesmo domínio sem identificá-lo concretamente; falta de prova conserva a condição/lacuna sem fabricar um valor ou um domínio. A prova do vínculo declarado em `EntryState` é verificada em `entry_site(e)`, conforme [02, §1.4](02-tipos-valores-e-operandos.md#14-escopo-de-provas-de-domínio); uma premissa limitada à fronteira de uma chamada não valida a inicialização para todas as entradas/ativações.
 
 `EntryState` descreve a entrada da ativação, não uma operação que se repete em cada visita ao label inicial por back-edge. Reentrar no label por transferência dentro da mesma ativação não reaplica seus seeds.
 

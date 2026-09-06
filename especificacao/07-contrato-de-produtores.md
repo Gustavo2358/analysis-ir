@@ -1,18 +1,18 @@
 # 07 — Contrato de produtores e lowering
 
-**Analysis IR 1.0.0 — Normativo**
+**Analysis IR 2.0.0 — Normativo**
 
 ## 1. Independência
 
 O contrato de entrada de um produtor pertence a ele; o contrato de saída pertence à IR. A conformidade NÃO exige que a entrada seja um produto de nome específico, uma AST ou uma representação orientada a objetos. O consumidor deve observar apenas a publicação IR e contratos externos explicitamente referidos por ela.
 
-Um produtor de outra linguagem pode gerar a mesma operação com origem diferente. Não precisa reproduzir a taxonomia, os IDs, os namespaces nominais ou as fases de outro frontend. Nenhuma regra V1 depende de nome de linguagem ou palavra-chave-fonte.
+Um produtor de outra linguagem pode gerar a mesma operação com origem diferente. Não precisa reproduzir a taxonomia, os IDs, os namespaces nominais ou as fases de outro frontend. Nenhuma regra V2 depende de nome de linguagem ou palavra-chave-fonte.
 
 ## 2. Informações mínimas por capacidade
 
 | Capacidade de saída | Fatos exigidos da entrada ou de uma regra de tradução válida |
 | --- | --- |
-| Declaração nominal | Identidade, tipo conhecido ou desconhecido, origem e escopo |
+| Declaração nominal | Identidade, `TypeRef` conhecido ou `unknown_type` com lacuna, origem e escopo |
 | Célula independente | Identidade de armazenamento e justificativa de separação/alias |
 | Atribuição | Destino, valor, regra de conversão e ordem de avaliação |
 | Bifurcação | Predicado puro ou sua abstração, destinos de cada resultado e continuidades |
@@ -23,6 +23,10 @@ Um produtor de outra linguagem pode gerar a mesma operação com origem diferent
 | Construção não suportada | Identidade/origem observada, operandos conhecidos e limites conservadores |
 
 Se um fato exigido não estiver disponível, o produtor DEVE reduzir a alegação ou usar representação opaca. Não deve preencher o campo com um default de semântica mais forte.
+
+Tipo desconhecido não remove declaração, célula, leitura ou ocorrência conhecida. O produtor usa `unknown_type(u)` uniformemente e preserva fatos independentes. Não pode escolher `int`, `text`, `bool` ou `opaque_type` para satisfazer a assinatura desejada. Uma operação de domínio conhecido só é publicada se suas precondições forem satisfeitas; caso contrário, a construção e suas leituras/escritas conhecidas permanecem por abstração explícita.
+
+Quando conhece uma cópia sem conversão, o produtor DEVE preservar essa relação de valor por `assign` ou transmissão pertinente se puder demonstrar `sameDomain`, ainda que não identifique o domínio concreto. Pode publicar uma premissa tipada de mesmo domínio, com autoridade, sujeitos, origem e `DomainProofScope` conforme 02, §1.4; não pode inferi-la apenas da operação que pretende validar. Falta de prova de compatibilidade e falta de identidade concreta do domínio são lacunas diferentes. Uma premissa limitada a um site não é generalizada a todas as chamadas; uma garantia apenas de uma ativação particular não sustenta um escopo estático universal. Para escolha aberta, a premissa sobre a ocorrência inteira exige evidência que cubra também todo o restante, não só os candidatos listados.
 
 ## 3. O que o lowering faz
 
@@ -70,7 +74,7 @@ Políticas que mudam nomes externos, layout ou convenções de interação devem
 
 ## 7. Publicação
 
-O produtor DEVE validar fechamento, integridade, tipos conhecidos, inventários e referências antes de publicar. Deve rejeitar IR internamente inconsistente; recuperação de input parcial não justifica referências quebradas.
+O produtor DEVE validar fechamento, integridade, `TypeRef`, precondições de domínio das operações, inventários e referências antes de publicar. `unknown_type` não dispensa essas verificações. Deve rejeitar IR internamente inconsistente; recuperação de input parcial não justifica referências quebradas.
 
 Uma publicação não pode depender de callbacks para completar fatos ao ser consultada. Descartar o produtor após publicar não altera a semântica disponível. Uma publicação produzida sem linguagem-fonte, com os mesmos fatos normalizados, deve ser igualmente consumível.
 

@@ -1,6 +1,6 @@
 # 00 — Escopo, convenções e garantias
 
-**Analysis IR 1.0.0 — Normativo**
+**Analysis IR 2.0.0 — Normativo**
 
 ## 1. Vocabulário normativo
 
@@ -12,11 +12,11 @@ Identificadores entre crases designam conceitos semânticos. Não prescrevem nom
 
 ## 2. Domínio
 
-A V1 representa comportamento imperativo sequencial: leitura e atualização de estado, seleção de caminhos, repetição, transferência, invocação e interação com recursos. Unidades podem possuir múltiplas entradas, estado compartilhado explicitamente e relações de contenção. A contenção lexical não determina transferência de controle nem compartilhamento de memória.
+A V2 representa comportamento imperativo sequencial: leitura e atualização de estado, seleção de caminhos, repetição, transferência, invocação e interação com recursos. Unidades podem possuir múltiplas entradas, estado compartilhado explicitamente e relações de contenção. A contenção lexical não determina transferência de controle nem compartilhamento de memória.
 
 A IR NÃO DEVE exigir uma árvore sintática, tabela de símbolos, resolução nominal, parser, linguagem-fonte ou objeto de análise externo vivo para ser interpretada. Um produtor pode ser um frontend, um tradutor de outra IR ou uma ferramenta que já disponha de fatos semânticos equivalentes.
 
-Concorrência, sinais assíncronos, autoalteração arbitrária de instruções, carregamento irrestrito de código e aritmética de máquina não especificada não possuem semântica precisa no núcleo V1. Quando relevantes, DEVEM aparecer por extensão negociada ou abstração conservadora que inclua seus efeitos. Ausência de perfil não equivale a ausência de comportamento.
+Concorrência, sinais assíncronos, autoalteração arbitrária de instruções, carregamento irrestrito de código e aritmética de máquina não especificada não possuem semântica precisa no núcleo V2. Quando relevantes, DEVEM aparecer por extensão negociada ou abstração conservadora que inclua seus efeitos. Ausência de perfil não equivale a ausência de comportamento.
 
 ## 3. Responsabilidades
 
@@ -70,4 +70,4 @@ O núcleo não assume memória independente por nome, inicialização por zero, 
 
 ## 9. Conformidade
 
-A conformidade é declarada por versão, papel e perfil, conforme [10 — Perfis](10-perfis-de-conformidade.md). O núcleo é fechado semanticamente nesta versão; extensões possuem contratos próprios. Uma declaração genérica “suporta V1” sem papel e perfis é insuficiente.
+A conformidade é declarada por versão, papel e perfil, conforme [10 — Perfis](10-perfis-de-conformidade.md). O núcleo é fechado semanticamente nesta versão; extensões possuem contratos próprios. Uma declaração genérica “suporta V2” sem papel e perfis é insuficiente.
