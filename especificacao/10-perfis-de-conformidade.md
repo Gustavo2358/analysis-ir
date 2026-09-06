@@ -34,6 +34,8 @@ Sub-requisitos obrigatórios: O-01-STRUCT a O-10-STRUCT, O-18-STRUCT a O-22-STRU
 
 Também exige O-69-STRUCT a O-85-STRUCT. O perfil não exige O-69-SCALAR a O-70-SCALAR, O-72-SCALAR a O-80-SCALAR, O-82-SCALAR a O-84-SCALAR nem O-81-REGION: preservar uma declaração de escrita/cópia não exige calcular os valores ou efeitos resultantes.
 
+Exige ainda O-86-STRUCT a O-91-STRUCT: fechamento contratual, targets, forma de separação, limites da validação e envelopes. Esses sub-requisitos não antecipam produtos de análise.
+
 ## 4. Perfil `AIR-SCALAR-FLOW@2`
 
 Inclui `AIR-STRUCTURE@2` e acrescenta células abstratas com associação/independência explícita, objetos com alias de célula, estados de entrada, `assign`, `havoc`, `nop` e todas as expressões de núcleo com seus tipos e precondições.
@@ -46,6 +48,8 @@ Oráculos adicionais integrais: O-01 a O-17, O-20, O-22 a O-29, O-35, O-36, O-47
 
 Sub-requisitos adicionais: O-69-SCALAR a O-70-SCALAR, O-72-SCALAR a O-80-SCALAR e O-82-SCALAR a O-84-SCALAR. O-71 e O-85 possuem somente assertivas estruturais, já herdadas. Os resultados incluem efeitos e captura/cópia de valores mesmo sob `unknown_type`, quando `sameDomain` estiver comprovado; não exigem enumerar um valor que o cenário não identifica.
 
+Inclui O-88-SCALAR para a consequência observável de separação declarativa em uma escrita limitada.
+
 ## 5. Perfil `AIR-REGION-FLOW@2`
 
 Inclui `AIR-SCALAR-FLOW@2` e `memory.regions@1`. Exige vistas, codecs padronizados, intervalos, sobreposição, escrita parcial, `copy_bytes`, associação aberta e acessos calculados com limites explícitos.
@@ -54,7 +58,7 @@ O consumidor RD deve identificar contribuições por intervalo. O consumidor de 
 
 Oráculos adicionais: O-37 a O-40, O-51 a O-55.
 
-Inclui ainda O-81-REGION, sobre domínio lógico, codec e fatos físicos independentes; O-81-STRUCT é herdado. Não delega ao leitor escolher quais frases de O-81 se aplicam.
+Inclui ainda O-81-REGION, sobre domínio lógico, codec e fatos físicos independentes, e O-88-REGION, sobre separação por intervalos da mesma base; seus sub-requisitos estruturais são herdados. Não delega ao leitor escolher quais frases de O-81 se aplicam.
 
 ## 6. Perfil `AIR-LOCAL-CONTROL@2`
 

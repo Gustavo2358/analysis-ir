@@ -4,7 +4,7 @@
 
 ## 1. Independência
 
-O contrato de entrada de um produtor pertence a ele; o contrato de saída pertence à IR. A conformidade NÃO exige que a entrada seja um produto de nome específico, uma AST ou uma representação orientada a objetos. O consumidor deve observar apenas a publicação IR e contratos externos explicitamente referidos por ela.
+O contrato de entrada de um produtor pertence a ele; o contrato de saída pertence à IR. A conformidade NÃO exige que a entrada seja um produto de nome específico, uma AST ou uma representação orientada a objetos. O consumidor deve observar apenas a publicação IR e o conteúdo contratual nela materializado; referências de autoridade não autorizam completar fatos por consulta externa.
 
 Um produtor de outra linguagem pode gerar a mesma operação com origem diferente. Não precisa reproduzir a taxonomia, os IDs, os namespaces nominais ou as fases de outro frontend. Nenhuma regra V2 depende de nome de linguagem ou palavra-chave-fonte.
 
@@ -77,6 +77,8 @@ Políticas que mudam nomes externos, layout ou convenções de interação devem
 O produtor DEVE validar fechamento, integridade, `TypeRef`, precondições de domínio das operações, inventários e referências antes de publicar. `unknown_type` não dispensa essas verificações. Deve rejeitar IR internamente inconsistente; recuperação de input parcial não justifica referências quebradas.
 
 Uma publicação não pode depender de callbacks para completar fatos ao ser consultada. Descartar o produtor após publicar não altera a semântica disponível. Uma publicação produzida sem linguagem-fonte, com os mesmos fatos normalizados, deve ser igualmente consumível.
+
+O produtor materializa assinaturas externas por ocorrência de `invoke`, limites, outcomes e premissas antes de entregar a publicação (04, §7.4). `ContractRef` conserva autoridade/versão/evidência, sem inventário de contratos ou resolução posterior. Separação entre bases distintas usa a garantia de 03, §3.1 quando estabelecida; não é consequência de IDs diferentes. Evidência de precondições não depende de classes `SafetyAssertion` nem de certificados privados de um Validator (06, §5.1).
 
 ## 8. Critério de suficiência
 

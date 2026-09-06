@@ -1,36 +1,42 @@
-# Analysis IR JSON Binding — proposta v1
+# Analysis IR JSON Binding 1.0.0
 
-**Status:** proposta para revisão e promoção em `analysis-ir`; não é contrato já
-aprovado pelo simples fato de acompanhar `air-java`.
+**Status: DRAFT — não NORMATIVE / ACCEPTED.** Este PR mantém a candidata em
+revisão; seu merge não a promove automaticamente a contrato estável.
+**Targets AIR 2.0.0**, na edição em fechamento deste repositório.
+**Transport contract != semantic version**: `bindingVersion` identifica transporte;
+`airVersion` identifica semântica; nenhuma delas é versão de biblioteca.
 
-**Versão candidata do binding:** 1.0.0. **Semântica de referência:** AIR 2.0.0,
-commit `0b2fbce7046010b22b32efa8cbc3e75ccba09442`.
-**Destino sugerido:** `analysis-ir/bindings/json-v1.md`.
+A autoridade é a [especificação AIR](../especificacao/00-escopo-e-convencoes.md).
+Este documento codifica seus fatos; não acrescenta precondições, entidades ou
+resultados de análise. Divergência é defeito do binding. As decisões desta revisão
+estão no [handoff](revisao-json-v1.md); o estado da edição e o impacto normativo
+estão na [política de versões](../especificacao/09-extensibilidade-e-compatibilidade.md#52-fechamento-do-modelo-antes-da-estabilização-da-200).
 
-O documento especifica uma codificação de transporte, não uma nova IR. O significado
-vem de [01](../especificacao/01-modelo-e-identidades.md),
-[02](../especificacao/02-tipos-valores-e-operandos.md),
-[04](../especificacao/04-operacoes.md) e
-[06](../especificacao/06-incompletude-e-proveniencia.md).
-Em conflito, a especificação semântica prevalece e este binding deve ser corrigido.
+## 1. Correspondência e alcance
 
-## 1. Objetivo e independência
+```text
+modelo semântico AIR ⇄ codificação JSON
+```
 
-O produtor e o consumidor podem trocar um arquivo UTF-8 e materializar a mesma
-publicação imutável em memória. `cobol-lowering` e `analysis-cfg` usam adapters
-externos ao core. O modelo `air-java` não importa JSON nem carrega anotações de
-Jackson/Gson. Um adapter pode usar DTOs/mix-ins/factories próprios.
+Um codec pode ser implementado em qualquer linguagem lendo este documento e os
+normativos referidos. Classes, factories, enums de runtime e estruturas privadas
+de uma implementação não são fontes de campos. Não se serializam callbacks,
+ponteiros, nomes de classes, identidade de objetos em memória, CFG, efeitos
+calculados, RD ou valores propagados.
 
-Não se serializam nomes de classes Java, `toString()`, identidade de objetos JVM,
-callbacks, ponteiros, estados calculados de CFG, GEN/KILL, RD ou possible values.
-Trocar arquivo por passagem direta de `Publication` não altera a porta do consumidor.
+Esta candidata cobre o núcleo e as extensões padronizadas `memory.regions@1`,
+`control.local@1` e `control.indirect@1`. Identidades de outras capacidades podem
+ser transportadas; seu payload preciso requer binding de extensão negociado.
+Não há payload semântico livre nem ativação de código por nome de classe. Sem
+codificação precisa disponível, uma redução/abstração AIR já publicada conserva
+operandos, envelopes e incertezas; o decoder não inventa essa redução.
 
-Esta proposta cobre o vocabulário listado abaixo, inclusive as três extensões
-padronizadas. Payloads de novas extensões precisas precisam de revisão versionada
-ou binding próprio negociado. Uma construção não interpretada pode usar `opaque`
-com seus envelopes; não vira uma variante JSON arbitrária sem contrato.
+A promoção exige revisão explícita e evidência dos oráculos da seção 13.
+Este repositório não contém codec nem anuncia testes de round-trip executados.
+A candidata anterior baseada no catálogo Java é incompatível com esta revisão;
+não recebe promessa de leitura ou conversão silenciosa.
 
-## 2. Envelope
+## 2. Envelope e versão
 
 ```json
 {
@@ -56,516 +62,475 @@ com seus envelopes; não vira uma variante JSON arbitrária sem contrato.
       "uncertainties": []
     },
     "uncertainties": [],
-    "premises": [],
-    "contracts": []
+    "premises": []
   }
 }
 ```
 
-O exemplo representa **zero conhecido no escopo declarado**, não uma análise
-indisponível. Uma produção real não pode usar esse envelope para ocultar input.
+O exemplo representa zero conhecido no escopo declarado; não representa input
+indisponível. Os inventários e campos do envelope são obrigatórios.
+`airVersion` codifica, uma única vez, o componente semântico `Publication.version`;
+`publication.id` codifica `publicationId`. Não existe campo `contracts`.
 
-`airVersion` é a única codificação de `Publication.airVersion`, localizada no
-envelope. `bindingVersion` não é a versão da biblioteca Maven. `contracts` materializa
-conteúdo explicitamente referenciado; não representa um serviço consultado depois.
-Todos os campos estruturais do envelope são obrigatórios, mesmo com arrays vazios.
+Esta candidata aceita exatamente `bindingVersion="1.0.0"` e `airVersion="2.0.0"`.
+Outra combinação exige negociação/revisão explícita. Semelhança física não prova
+compatibilidade. Após estabilização do binding, remover/alterar formas ou defaults
+incompativelmente exige major de transporte; isso não altera por si só a versão AIR.
 
-Uma versão major diferente não recebe interpretação automática. Esta candidata
-aceita exatamente AIR 2.0.0; ampliar a matriz de compatibilidade exige evidência e
-revisão do contrato. Não deduzir compatibilidade só porque os campos parecem iguais.
+## 3. Convenções físicas e números
 
-## 3. Regras léxicas e valores
+O documento é exatamente um objeto JSON em UTF-8, sem BOM. Só whitespace JSON é
+permitido depois dele. Rejeitam-se propriedades duplicadas, UTF-8 inválido e
+surrogates isolados, inclusive em escapes. Strings denotam escalares Unicode;
+não se normalizam caixa, padding ou Unicode.
 
-O arquivo contém exatamente um objeto JSON, em UTF-8, sem BOM e sem conteúdo após
-esse objeto além de whitespace permitido. Nomes de propriedades repetidos são
-rejeitados; “último vence” não é recuperação válida. Strings representam escalares
-Unicode; surrogates isolados são inválidos. Não normalizar Unicode, caixa ou espaços.
+As tabelas usam esta metanotação, independente de linguagem:
 
-Inteiros matemáticos da AIR, coeficientes decimais, tamanhos físicos arbitrários e
-literais inteiros são **strings decimais canônicas**, evitando perda em ferramentas
-que usam IEEE-754: `"0"`, `"-17"`, `"9007199254740993"`. Não usar `-0`, `+1`, zeros
-à esquerda ou notação exponencial. Escalas, posições e contagens Java limitadas são
-números JSON inteiros exatos, com os limites documentados do campo, nunca doubles.
-
-| Domínio literal | Forma |
+| Notação | Codificação |
 | --- | --- |
-| bool | `{"kind":"bool","value":true}` |
-| int | `{"kind":"int","value":"123"}` |
-| decimal | `{"kind":"decimal","coefficient":"125","scale":2}` |
-| text | `{"kind":"text","value":"A "}`; vazio e padding são valores |
-| bytes | `{"kind":"bytes","base64":"AP8="}`; RFC 4648 padrão, padding, sem whitespace |
-| label | `{"kind":"label","label":<LabelId>,"domain":<LabelType>}` |
+| `Text` | String de escalares Unicode |
+| `Bool` | `true` ou `false` JSON |
+| `Integer` | String decimal canônica, padrão `0` ou `-?[1-9][0-9]*` |
+| `Natural` | `Integer` não negativo, sem limite semântico fixo |
+| `X[]` | Array de X; ordem conforme seção 6 |
+| `X?` | Campo presente com X ou `null`, apenas para ausência permitida |
+| `f:X` | Propriedade obrigatória de nome `f` e tipo X |
+| `v(f:X,...)` | Objeto com `kind:"v"` e os campos indicados |
 
-`decimal` conserva coeficiente e escala publicados; igualdade de valores em
-dispatch é semântica, não comparação da codificação. `bytes` não é texto sem codec.
-Não existe literal de `unknown_type`. Extensão de literal precisa de domínio,
-manifesto e codificação próprios; não usar uma string genérica como valor arbitrário.
+**Todos os inteiros**, inclusive posições, escalas, larguras, contagens e coordenadas,
+usam strings. Não há limite de `int` Java, IEEE-754 ou 2^53 no contrato. Não usar
+`-0`, `+1`, zeros à esquerda, fração ou expoente. Limite de implementação é erro
+operacional explícito, nunca truncamento ou nova regra de validade AIR.
 
-## 4. Identidades
+| Valor literal | Forma JSON |
+| --- | --- |
+| bool | `bool(value:Bool)` |
+| int | `int(value:Integer)` |
+| decimal | `decimal(coefficient:Integer,scale:Natural)` |
+| text | `text(value:Text)` |
+| bytes | `bytes(base64:Text)` |
+| label | `label(label:LabelId,domain:LabelType)` |
 
-Toda ocorrência de ID, inclusive referências, carrega domínio e namespace completo.
-`localId` é string opaca, não nome COBOL nem expressão. As formas são:
+`bytes.base64` usa alfabeto padrão `A-Z a-z 0-9 + /`, grupos de quatro caracteres,
+padding `=` necessário, bits de padding zero e nenhum whitespace; vazio codifica
+zero octetos. Não se publica array de inteiros como outra forma de bytes.
+`decimal` conserva coeficiente e escala; por exemplo
+`{"kind":"decimal","coefficient":"125","scale":"2"}`. Igualdade numérica
+em `dispatch` independe de grafias decimais distintas. Não existe literal com tipo
+desconhecido. Literal de extensão exige seu binding próprio.
+
+## 4. Identidades e fechamento
+
+Toda ocorrência de ID, inclusive referência, transporta domínio e namespace completo:
 
 ```text
-PublicationId = {domain:"publication", localId}
-GlobalId      = {domain, publication:<PublicationId.localId>, localId}
-UnitOwnedId   = {domain, publication:<PublicationId.localId>,
-                 unit:<UnitId.localId>, localId}
-OperandId     = {domain:"operand", publication, unit,
-                 owner:{kind:"operation"|"entry", localId}, localId}
+PublicationId = {domain:"publication",localId:Text}
+GlobalId = {domain:Text,publication:Text,localId:Text}
+UnitOwnedId = {domain:Text,publication:Text,unit:Text,localId:Text}
+OperandId = {domain:"operand",publication:Text,unit:Text,
+             owner:{kind:"operation"|"entry",localId:Text},localId:Text}
 ```
 
-Domínios globais: `unit`, `storage`, `resource`, `artifact`, `origin`, `uncertainty`,
-`premise`, `contract`, `relation`. Domínios pertencentes a unidade: `entry`, `label`,
-`operation`, `object`, `completion_port`. Domínios não são intercambiáveis.
+`publication` e `unit` contêm os `localId` dos respectivos proprietários. `localId`
+é opaco. Esses objetos não autorizam usar nomes de exibição como joins.
 
-```json
-{
-  "domain": "operand",
-  "publication": "p",
-  "unit": "u",
-  "owner": {"kind": "operation", "localId": "invoke-7"},
-  "localId": "target"
-}
-```
+| Forma | Domínios / entidades AIR |
+| --- | --- |
+| GlobalId | `artifact`, `relation` (`ArtifactRelationId`), `unit`, `storage`, `resource`, `origin`, `uncertainty`, `premise` |
+| UnitOwnedId | `entry`, `label`, `operation`, `object`, `completion_port` |
+| OperandId | Ocorrência de expressão/local na operação ou condição de entrada |
 
-É permitido repetir a codificação do mesmo ID como referência. Não é permitido
-publicar duas entidades com esse mesmo ID no mesmo domínio. IDs são próprios da AIR;
-correlação com Semantic Product pertence à proveniência, não à chave global.
+`RegionId` e identidade de célula são `StorageId` com espécie verificada. Não se
+adicionam domínios `region`, `cell` ou `contract`. `ContractRef` é valor, não ID.
+A unidade proprietária de armazenamento de ativação é propriedade declarativa;
+seu ID permanece global, conforme [01](../especificacao/01-modelo-e-identidades.md).
 
-## 5. União tipada, ausência e desconhecimento
+Há uma definição por ID completo. Repetir um ID como referência não define outro
+fato. Cada nó de expressão/local é definido uma vez sob seu proprietário. Envelopes,
+recursos e resultados opacos referem essas ocorrências por ID quando indicado;
+não duplicam a árvore nem criam uma segunda avaliação. Usos executáveis distintos
+exigem ocorrências distintas, mesmo se a expressão tem a mesma grafia.
 
-Uma soma de variantes usa **`kind` explícito e obrigatório**. Não escolher variante
-pela presença de campos, por nome da classe ou pelo texto de `observedKind`.
+## 5. Variantes, ausência e desconhecimento
+
+Uma soma usa `kind` obrigatório; não se escolhe variante pela presença de campos.
+Todos os campos das tabelas são obrigatórios. Apenas `?` admite `null` para ausência
+real. Campo omitido não vira `null`, zero, `false`, `[]` ou `none`. Uma lacuna não
+é ausência e usa sua variante/referência explícita.
 
 ```json
 {"kind":"known","type":{"kind":"text"}}
 ```
 
 ```json
-{
-  "kind":"unknown_type",
-  "uncertainty":{"domain":"uncertainty","publication":"p","localId":"type-1"}
-}
+{"kind":"unknown_type","uncertainty":{"domain":"uncertainty","publication":"p","localId":"type-1"}}
 ```
 
-A referência acima deve apontar para `TYPE_UNKNOWN`. Domínio de extensão é
-`{"kind":"opaque_type","name":"vendor.domain","version":"1.0.0"}`, dentro de
-`known`; não é substituto para tipo desconhecido. `label` carrega unidade e universo.
+| Tipo de transporte | Variantes |
+| --- | --- |
+| TypeRef | `known(type:Type)`; `unknown_type(uncertainty:UncertaintyId)` |
+| Type | `bool`; `int`; `decimal`; `text`; `bytes`; `opaque_type(name:Text,version:Text)`; LabelType |
+| LabelType | `label(unit:UnitId,labels:LabelId[])` |
+| UnknownBound | `none`; `unknown(uncertainty:UncertaintyId)` |
+| ContractKnowledge | `known(reference:ContractRef)`; `unknown(uncertainty:UncertaintyId)` |
+| ContractRef | `{authority:Text,version:Text,evidence:OriginId[]}` |
 
-Uma expressão desconhecida carrega seu próprio `typeRef`, `dependencies`,
-`remainingReads` e razão **de valor**. A razão do valor não substitui `TYPE_UNKNOWN`.
-Um predicado de valor desconhecido precisa continuar `known(bool)` para `branch`.
+`TypeRef.unknown_type` fecha sobre `TYPE_UNKNOWN`; contrato desconhecido fecha sobre
+`CONTRACT_UNKNOWN`. Evidência de `ContractRef` é não vazia, conforme 01, §9. Sua versão
+é a revisão da autoridade, sem exigir semver de biblioteca. Tipos/capacidades de
+extensão conservam sua versão declarada, com compatibilidade regida pelo manifesto.
 
-Campos opcionais são explicitamente `null`; arrays obrigatórios vazios são `[]`.
-Campo ausente não vira `null`, zero, `false`, array vazio ou semântica `none`.
-Limites usam variantes `none`/`within` explícitas; desconhecimento não é `none`.
-`ContractKnowledge` contém exatamente um entre `contract` e `unknown`, o outro `null`.
-Um `Entry` com corpo disponível não pode ter label ausente.
+Tipo, valor, aridade, modo, associação, interpretação de codec e suporte a extensão
+continuam conhecimentos distintos. Razão de valor não substitui razão de tipo.
+Nenhum `known` do binding tem significado mais forte que seu fato AIR.
 
-## 6. Ordenação e determinismo
+## 6. Ordenação e canonical JSON
 
-A escrita canônica usa campos de cada objeto em ordem lexicográfica ordinal dos
-nomes de propriedades. Arrays conservam a ordem determinística da publicação;
-parâmetros, resultados, operandos, operações, condições de entrada e include chains
-não são reordenados por nome. Nenhum consumidor extrai fluxo da posição das sequences.
+A forma canônica tem propriedades em ordem lexicográfica por valores escalares
+Unicode, sem indentação e sem newline final. Escapa apenas `"`, `\` e U+0000..U+001F,
+usando `\b`, `\f`, `\n`, `\r`, `\t` onde cabíveis e `\u00xx` minúsculo nos demais.
+Não escapa `/` nem outros escalares; a saída é UTF-8.
 
-Sem indentação e sem newline final na forma canônica. Escapar apenas aspas,
-backslash e caracteres de controle; usar escapes curtos `\b`, `\f`, `\n`, `\r`,
-`\t` quando aplicáveis e `\u00xx` minúsculo nos demais controles. Não escapar `/`
-ou escalares Unicode imprimíveis. A representação é UTF-8, sem conversão ambiental.
+Arrays preservam sua ordem transportada. Operações, argumentos, posições de assinatura,
+resultados e cadeias de inclusão têm a ordem semântica pertinente. Inventários,
+sequências, conjuntos de premissas, condições de entrada e casos de `dispatch`
+preservam uma ordem física para round-trip; essa ordem não introduz execução,
+precedência de condições sobrepostas nem prioridade entre casos. Duplicatas são
+rejeitadas quando violam unicidade de identidades, posições ou conjuntos do modelo.
 
-Para a mesma publicação ordenada, versões e configuração, as codificações repetidas
-são byte a byte idênticas. Isso não exige bytes iguais de duas IRs semanticamente
-equivalentes com diferentes decomposições ou ordens físicas de sequences. Os
-produtores continuam responsáveis por publicação deterministicamente ordenada.
+Para a mesma publicação com a mesma ordem física, a escrita canônica produz os
+mesmos bytes. Não se exige identidade de bytes entre decomposições equivalentes,
+renomeações ou permutações de inventários. O encoder não acrescenta timestamp,
+IDs aleatórios ou propriedades do processo. Preserva metadados e IDs já publicados
+quando admitidos pelo catálogo; não exige que `publicationId` seja hash do JSON.
 
-Não incluir timestamp, duração, UUID aleatório, hash de objeto, thread ou informação
-de execução no payload. `publicationId` não precisa ser um hash do próprio JSON e
-não é chave persistente de programa. Não criar dependência circular ID↔digest.
-
-## 7. Sequências, operações e pontos
+## 7. Operações e ocorrências
 
 ```text
-Sequence = {label, instructions:[Instruction...], terminator:Terminator, origin}
+Sequence = {label:LabelId,instructions:Operation[],terminator:Operation,origin:OriginId}
+OperationHeader = {id:OperationId,origin:OriginId,coverage:CoverageStatus,
+                   precision:Precision,uncertainties:UncertaintyId[]}
+OperandHeader = {id:OperandId,role:OperandRole,origin:OriginId}
 ```
 
-`instructions` nunca contém terminador e `terminator` contém exatamente um.
-`invoke`, `opaque` e transferências locais/indiretas são terminadores. Não inserir
-`jump` por proximidade física das sequences. `Operation.header` contém ID, origem,
-coverage, precision e uncertainties; a unidade proprietária vem do ID completo e
-a sequência proprietária vem da posição declarativa, validada por unicidade.
+`instructions` contém apenas operações comuns; `terminator` contém exatamente um
+terminador. As espécies core são versionadas por `airVersion`; operações das
+extensões padronizadas também exigem a capacidade correspondente. Não se publicam
+nomes Java como espécies. A sequência proprietária vem da posição declarativa;
+a unidade vem do ID e ambas são verificadas por fechamento/unicidade.
 
-| kind | Campos específicos além de header |
+Todas as formas abaixo têm `header:OperationHeader`, além de `kind` e seus campos:
+
+| kind | Campos | Classe |
+| --- | --- | --- |
+| assign | `destination:Place,value:Expression` | comum |
+| havoc.must | `destination:Place,reason:UncertaintyId` | comum |
+| havoc.may | `scope:MemoryScope,reason:UncertaintyId` | comum |
+| nop | nenhum | comum |
+| copy_bytes | `destination:ByteRange,source:ByteRange,length:Natural,fallback:Envelope` | comum, memory.regions@1 |
+| jump | `destination:LabelId` | terminador |
+| branch | `predicate:Expression,trueDestination:LabelId,falseDestination:LabelId` | terminador |
+| dispatch | `selector:Expression,cases:Case[],defaultDestination:LabelId` | terminador |
+| invoke | `action:Text,target:Target,arguments:Argument[],results:Place[],signature:InvocationSignature,effectOperands:Place[],effectBound:EffectBound,outcomes:InvocationOutcomes,contract:ContractKnowledge` | terminador |
+| return | `values:Expression[]` | terminador |
+| raise | `tag:Text,values:Expression[]` | terminador |
+| halt | `haltKind:HaltKind` | terminador |
+| opaque | `observedKind:Text,knownOperands:Operand[],valueResults:OperandId[],envelope:Envelope` | terminador |
+| local.invoke | `entry:LabelId,completionPorts:CompletionPortId[],resume:LabelId,fallback:Envelope` | terminador, control.local@1 |
+| local.boundary | `port:CompletionPortId,defaultDestination:LabelId,fallback:Envelope` | terminador, control.local@1 |
+| local.resume | `fallback:Envelope` | terminador, control.local@1 |
+| local.unwind | `count:Natural,destination:LabelId,fallback:Envelope` | terminador, control.local@1 |
+| indirect.jump | `target:Expression,within:LabelType,fallback:Envelope` | terminador, control.indirect@1 |
+
+`Case={value:LiteralValue,destination:LabelId}`. `ByteRange` é definido na seção 10.
+`Operand` é Expression ou Place, cujos discriminadores são distintos. O tipo/posição
+vem da forma e do proprietário, sem anotação que fortaleça um `TypeRef`.
+
+`effectOperands` é o local físico para definir os locais contratuais de 04, §7.4
+usados apenas pelo limite. Não adiciona leitura/escrita pela mera presença. Locais
+já definidos nos argumentos/resultados são referidos por ID no limite. Os IDs de
+`opaque.valueResults` referem Places definidos em `knownOperands`, sem nova avaliação.
+`opaque` codifica `reasons` em `header.uncertainties`, sem segunda lista divergente.
+Não há `signatureGaps` paralelo aos restantes/lacunas da assinatura nem `return.entryScope`.
+
+## 8. Expressões e locais
+
+Cada forma tem `header:OperandHeader`, além dos campos abaixo. Seu `TypeRef` é obtido
+pelas regras de [02](../especificacao/02-tipos-valores-e-operandos.md); o codec não
+infere conhecimento de tipo pela operação pretendida.
+
+| Soma | kind e campos |
 | --- | --- |
-| assign | destination, value |
-| havoc.must | destination, reason |
-| havoc.may | scope, reason |
-| nop | nenhum |
-| copy_bytes | destination, source, length, fallback |
-| jump | destination |
-| branch | predicate, trueDestination, falseDestination |
-| dispatch | selector, cases, defaultDestination |
-| invoke | action, target, arguments, results, effectBound, outcomes, contract, signatureGaps |
-| return | values, entryScope |
-| raise | tag, values |
-| halt | haltKind (`NORMAL`/`ABNORMAL`) |
-| opaque | observedKind, knownOperands, valueResults, envelope |
-| local.invoke | entry, completionPorts, resume, fallback |
-| local.boundary | port, defaultDestination, fallback |
-| local.resume | fallback |
-| local.unwind | count, destination, fallback |
-| indirect.jump | target, within, fallback |
+| Expression | `literal(value:LiteralValue)`; `read(place:Place)`; `unknown(typeRef:TypeRef,dependencies:Expression[],remainingReads:MemoryBound,reason:UncertaintyId)` |
+| Expression composta | `unary(operator:UnaryOperator,argument:Expression)`; `binary(operator:BinaryOperator,left:Expression,right:Expression)`; `quantize(value:Expression,scale:Natural,rounding:Rounding)`; `fit_text(value:Expression,length:Natural,pad:Text)`; `slice_text(value:Expression,start:Expression,count:Expression)`; `trim_right(value:Expression,characters:Text)` |
+| Place | `object(object:ObjectId)`; `choice(candidates:Place[],remainder:MemoryBound,typeRef:TypeRef)`; `region_slice(region:StorageId,offset:Expression,length:Expression,codec:Codec,typeRef:TypeRef)` |
 
-Os fallbacks pertencem à mesma operação; não se contam nem executam original e
-fallback como eventos distintos. Capacidade necessária entra no manifesto.
+`pad` contém exatamente um escalar. Operandos de índices/comprimentos calculados
+exigem `known(int)`. `region_slice` exige `memory.regions@1`; seu `typeRef` deve
+coincidir com o conhecimento lógico do codec/vista. Não há `boundsProof`, `accessProof`
+ou `knownRemainderDomainProof`. A ausência desses campos não dispensa precondições
+nem a garantia universal sobre candidatos/restante de uma escolha (02 e 06, §5.1).
 
-Pontos usam `before`, `after`, `entry`, `exit`; identificam operação/entrada/unidade
-e outcome conforme o caso. Nunca são inteiros de traversal ou números de linha.
-Outcome usa `normal`, `exception` com tag, `other_exception`, `halt`, `diverge`.
+## 9. Interações, assinaturas e premissas
 
-## 8. Expressões, locais, interações e envelopes
-
-| Soma | Discriminadores e campos |
+| Estrutura | Forma |
 | --- | --- |
-| Expression | `literal(header,value)`; `read(header,place)`; `unknown(header,typeRef,dependencies,remainingReads,reason)` |
-| Expression composta | `unary(header,operator,argument)`; `binary(header,operator,left,right)`; `quantize(header,value,scale,rounding)`; `fit_text(header,value,length,pad)`; `slice_text(header,value,start,count,boundsProof)`; `trim_right(header,value,characters)` |
-| Place | `object(header,object)`; `choice(header,candidates,remainder,typeRef,knownRemainderDomainProof)`; `region_slice(header,region,offset,length,codec,typeRef,accessProof)` |
-| Target | `internal(entry)`; `literal(category,namespace,name,namePolicy,origin)`; `computed(category,namespace,name,namePolicy,origin)`; `resource(resource)` |
-| Argument | `value(value)`; `copy(value)`; `reference(place)` |
-| NamePolicy | `exact`; `contract(contract)`; `unknown(uncertainty)` |
-| Codec | `bytes.identity`; `text.ascii`; `binary(signed,width,order)`; `extension(name,version,logicalType,contract)`; `unknown(logicalType,reason)` |
-| StorageBinding | `cell(storage)`; `view(region,offset,extent,codec)`; `alias(object)`; `alternatives(alternatives,remainder)`; `unknown(scope,reason)` |
-| Storage | `cell(header,typeRef)`; `region(header,extent,extentUnknown)` |
+| Target | `internal(entry:EntryId)`; `literal(category:Text,namespace:Text,name:Text,namePolicy:NamePolicy,origin:OriginId)`; `computed(category:Text,namespace:Text,name:Expression,namePolicy:NamePolicy,origin:OriginId)` |
+| NamePolicy | `exact`; `extension(name:Text,version:Text)`; `unknown(uncertainty:UncertaintyId)` |
+| Argument | `value(value:Expression)`; `copy(value:Expression)`; `reference(place:Place)` |
+| InvocationSignature | `entry(entry:EntryId)`; `external(signature:Signature)` |
+| Signature | `{parameters:ParameterInventory,results:ResultInventory,origin:OriginId}` |
+| ParameterInventory | `{known:Parameter[],remainder:UnknownBound}` |
+| ResultInventory | `{known:ResultSlot[],remainder:UnknownBound}` |
+| Parameter | `{position:Natural,mode:ModeKnowledge,typeRef:TypeRef,objectBinding:ParameterBinding,origin:OriginId}` |
+| ResultSlot | `{position:Natural,typeRef:TypeRef,origin:OriginId}` |
+| ModeKnowledge | `known(mode:PassingMode)`; `unknown(uncertainty:UncertaintyId)` |
+| ParameterBinding | `object(object:ObjectId)`; `unknown(uncertainty:UncertaintyId)`; `external` |
+| Premise | `{id:PremiseId,authority:Text,justification:Text,origin:OriginId,assertion:Assertion}` |
+| Assertion | `same_domain(left:DomainSubject,right:DomainSubject,scope:DomainProofScope)`; `disjoint_storage(storage:StorageId[])` |
 
-A notação da tabela descreve nomes de campos, não uma sintaxe adicional a implementar.
-Cada objeto de variante tem `kind`. Os outros nomes são suas propriedades JSON.
-Operadores, roles, status e demais enumerações fechadas usam os nomes explícitos do
-catálogo abaixo; valores não reconhecidos são erro de compatibilidade, não default.
+Posições são codificadas a partir de `"0"`; inventário fechado é contíguo, ordenado
+e completo. Em inventário aberto, `known` preserva cada posição conhecida, inclusive
+modo/tipo desconhecidos, e o restante admite outras posições não enumeradas.
+`Parameter.objectBinding` conserva objeto da entrada ou sua lacuna própria.
+Em assinatura externa usa `external`, pois esse vínculo não se aplica; não usa
+`unknown` ou objeto fictício para esse caso. `unknown_type` não abre aridade.
 
-Um `Operand.header` contém `id`, `role` e `origin`. O tipo pode ser derivado por regra
-normativa, por exemplo do objeto em `object` ou do valor em `literal`, sem anotar um
-segundo tipo que contradiga a fonte canônica.
+A assinatura interna referencia exatamente a entrada do target. A externa pertence
+à operação que a contém. `ContractRef` não aponta para conteúdo externo: assinatura,
+efeitos, outcomes, origens e premissas são o conteúdo disponível de 04, §7.4.
+Não existe `resource(ResourceId)` em Target. `NamePolicy.extension` e codecs de
+extensão referem capacidades com manifesto; não um contrato de chamada sem regra
+para nomes/codecs. Sem suporte, não recebem interpretação precisa implícita.
 
-`Envelope = {memory, control, dependencies}`. O envelope de memória contém
-`knownReads`, `otherReads`, `knownWrites`, `otherWrites`, `mustOverwrite`. As listas
-conhecidas referem **OperandId** presentes naquela operação, não nomes de variáveis.
-Escrita conhecida/must identifica Place. Isso evita duplicar a ocorrência só para
-referi-la na anotação do envelope.
-
-`ControlEnvelope = {known, remainder}`. Alternativas: `normal(label)`,
-`exception(tag,destination)`, `any_exception(destination)`, `halt`, `diverge`.
-Destination excepcional é `handler(label)` ou `propagate`. Um `invoke` admite no
-máximo um normal e tags únicas; um `opaque` pode admitir vários destinos conhecidos.
-
-`DependencyEnvelope = {known:[{action,target,point,origin}], remainder}`.
-`ForeignEffects = {reads,writes,mustOverwrite}`;
-`EffectBound = {otherwise,perOutcome:[{outcome,effects}]}`. Ausência de contrato não
-cria efeitos vazios; argumentos/resultados/outcomes incompletos mantêm suas lacunas.
-
-Bounds: memória e controle usam `none` ou `within(scope)`. Scope de memória usa
-`objects(objects)`, `storage(storage)`, `visible(unit,includingExternal)`,
-`all(publication,includingEnvironment)`, `union(members)`. Scope de controle usa
-`labels(labels)`, `unit(unit,labels,normalExit,exceptionalExit,halt,diverge,externalControl)`,
-`all(publication)`, `union(members)`. Recursos usam `none`, `any_resource` ou
-`categories(categories)`. Não substituir um scope por string de mensagem.
-
-## 9. Premissas e provas de domínio
-
-`Premise = {id,authority,justification,origin,assertion}`.
-`SameDomain` é `{"kind":"same_domain","left":<Subject>,"right":<Subject>,"scope":<DomainProofScope>}`.
-Não é uma propriedade inferida de IDs iguais de incerteza.
-
-Sujeitos: `object(object)`, `cell(cell)`, `operand(operand)`,
-`parameter(entry,position)`, `result(entry,position)`,
-`call_parameter(invocation,signature,position)`, `call_result(invocation,signature,position)`.
-`signature` é `entry(entry)` ou `external(contract)`.
-
-Escopos fechados: `publication`, `unit(unit)`, `entry(entry)`,
-`operation(operation)`, `invocation(invocation)`, `intersection(left,right)`.
-Interseção vazia é válida, mas não prova nada em site algum. Não há `activation`.
-Vínculos de assinatura são específicos de cada site, sem misturar chamador/chamado.
-
-Uma premissa sobre a ocorrência inteira de uma escolha aberta cobre candidatos e
-todo o restante. Não remover esse restante, promover o tipo ou escolher candidato.
-
-Esta representação também admite `disjoint_storage(storage,scope)` e
-`safety(property,subjects,scope)` como formas tipadas de premissas. São alegações
-com autoridade e origem, não semântica derivada pelo decoder. `safety` apenas
-identifica a evidência de precondições; sua verdade precisa ser estabelecida fora
-do parser/validator estrutural. A interpretação dessas formas deve ser revisada
-junto deste binding antes de sua promoção; não são licença para inventar premissas.
-
-### 9.1 Estados de entrada e relações de artefato
-
-`InitialValue` usa `literal(value)`, `parameter(position)`, `preserve`,
-`external_unknown(reason)` ou `uninitialized(reason)`. Na primeira forma, `value`
-é uma ocorrência `Expression.literal` pertencente à entrada, com seu próprio
-OperandId e origem. A associação Place de cada condição também pertence à entrada.
-`preserve` não equivale a reaplicar inicialização numa back-edge.
-
-`RelationTarget` usa `internal(artifact)` ou `external(resource)`. Uma relação de
-artefato não possui ponto de execução, e não é serializada como `invoke`.
-
-## 10. Origem, cobertura e enumerações
-
-Origem: `written(id,artifact,span,includes,exact)`,
-`derived(id,inputs,rule)`, `contractual(id,authority,version)`,
-`unavailable(id,reason)`. `Span` contém início/fim, base de linha/coluna,
-unidade de coluna e se o fim é exclusivo. IncludeFrame contém artefatos e site,
-sem exigir que o consumidor reabra arquivos. Origem derivada nunca recebe span inventado.
-
-Coverage: `{inventory,scope,items,uncertainties}`. Item:
-`{sourceKey,origin,status,outputs,uncertainties,elimination}`.
-Eliminação é `null` ou `{justification:<PremiseId>,rule}`. `sourceKey` é opaco ao
-consumidor; não é chave para reconstruir semântica de origem.
-
-Precision contém `control`, `storage`, `effects`, `values`, `dependencies`.
-Cada claim contém `{scope,status,reasons}`. Scope de fatos:
-`publication(publication)`, `unit(unit)`, `entities(entities)`.
-
-Uncertainty contém `{id,code,dimensions,scope,reason,origin}`; mensagem humana
-não governa comportamento. `INPUT_MISSING` não substitui valor externo desconhecido.
-
-Os campos estruturados restantes seguem o catálogo de campos abaixo, com ID,
-Optional, lista e valor codificados pelas regras anteriores. O catálogo descreve
-a forma abstrata do binding, não exige classes ou frameworks Java.
-
-## 11. Validação e erros nos adapters
-
-1. Ler bytes e verificar UTF-8, um único documento, propriedades únicas, nomes,
-   campos, variantes e versões. Erro físico/léxico é `INPUT_ERROR`.
-2. Decodificar DTOs de transporte sem inventar informação e materializar o modelo.
-   Forma semântica impossível e referência inválida são `INVALID_IR`, com regra e site.
-3. Validar fechamento, tipos/provas, envelopes e demais regras implementadas da AIR.
-   `INCOMPLETE_VALIDATION` não deve virar aprovação silenciosa.
-4. Negociar as capacidades que o consumidor realmente interpreta. Ausência de
-   suporte é incompatibilidade/consumo conservador explícito, nunca `nop`.
-
-Versão/variante não suportada não deve ser reparada ou descartada. Campos extras
-não previstos nesta candidata são rejeitados; adições compatíveis precisam de regra
-explícita em revisão do binding. Um future extension adapter deve ser negociado,
-não ativado por nomes de propriedades. Não habilitar desserialização de classes
-arbitrárias nem default typing baseado em nomes JVM.
-
-O schema JSON futuro poderá verificar forma. Ele não substituirá `sameDomain`,
-fechamento, relações de namespace ou a verdade semântica das premissas.
-
-## 12. I/O, escala e publicação
-
-O arquivo pode conter uma ou mais unidades da mesma Publication; não concatenar
-publicações com IDs locais. Para corpus grande, usar múltiplos arquivos/publicações
-com escopos explícitos, não um documento global obrigatório. Um adapter pode
-streamar o JSON e materializar índices, respeitando fechamento antes de entregar
-a publicação ao core. Limites atingidos são falha/limitação explícita, não prefixo válido.
-
-Writer de arquivo deve produzir temporário e substituir o destino somente após
-escrita completa, quando essa garantia de filesystem for disponível. Um consumidor
-não deve abrir um payload parcialmente escrito como se fosse publicação fechada.
-
-## 13. Oráculos antes de aprovar os adapters
-
-- Duas escritas da mesma publicação e duas construções independentes equivalentes
-  no contrato ordenado produzem os mesmos bytes.
-- Decodificação preserva todos os tipos/valores/IDs/outcomes/uncertainties/premises.
-- Origem exata, tipo conhecido e domínio comum não promovem outras dimensões.
-- Operações omitidas, referências trocadas, reason perdido ou empty substituindo
-  unknown são detectados.
-- Place/choice/alias e `sameDomain` têm contracasos com restante aberto e escopo errado.
-- Inteiros além de 2^53, bytes 00/FF, texto vazio, padding, escala decimal, Unicode
-  suplementar e estados opcionais sobrevivem ao round trip.
-- Propriedades duplicadas, trailing document, major desconhecida, variantes extras
-  e enums não reconhecidos falham explicitamente.
-- O mesmo BuildCfg sobre publicação construída em memória e decodificada do arquivo
-  produz resultado semanticamente equivalente, sob as mesmas opções/publicação.
-- Alterar adapter não cria dependência JSON em `air-java`, lowerer core ou CFG core.
-
-**Nenhum desses oráculos de codec é anunciado como executado por `air-java`: a
-biblioteca entregue deliberadamente não contém codec.** Esta é a obrigação dos
-adapters a implementar após aprovação do binding.
-
-## Apêndice A — Campos estruturados
-
-As tabelas usam nomes curtos de estruturas; a coluna de referência Java é somente
-um mapa de implementação. Os discriminadores acima prevalecem. IDs usam §4; tipos,
-valores e variantes usam §§3–10. `Optional<X>` significa campo explícito `null` ou X.
-A versão da publicação sai no envelope (`airVersion`), não duplicada no objeto interno.
-
-| Estrutura / referência Java informativa | Campos |
+| DomainSubject | Significado normativo em 02, §1.4 |
 | --- | --- |
-| `Artifacts.InternalArtifact` | `ArtifactId artifact` |
-| `Artifacts.ExternalArtifact` | `Interactions.LiteralTarget resource` |
-| `Artifacts.Relation` | `RelationId id, ArtifactId source, RelationTarget destination, String kind, OriginId origin, Evidence.CoverageStatus coverage` |
-| `Capabilities.Capability` | `String name, int major` |
-| `Capabilities.Manifest` | `List<Capability> required, List<Capability> provided` |
-| `Control.Handler` | `LabelId label` |
-| `Control.Normal` | `LabelId label` |
-| `Control.Exceptional` | `String tag, ExceptionDestination destination` |
-| `Control.AnyException` | `ExceptionDestination destination` |
-| `Control.Envelope` | `List<Alternative> known, Scopes.ControlBound remainder` |
-| `Control.ExceptionOutcome` | `String tag` |
-| `Control.Before` | `OperationId operation` |
-| `Control.After` | `OperationId operation, OutcomeKey outcome` |
-| `Control.EntryPoint` | `EntryId entry` |
-| `Control.ExitPoint` | `UnitId unit, OutcomeKey outcome` |
-| `Entries.CompletionPort` | `CompletionPortId id, OriginId origin` |
-| `Entries.LiteralInitial` | `Expressions.Literal value` |
-| `Entries.ParameterInitial` | `int position` |
-| `Entries.ExternalUnknown` | `UncertaintyId reason` |
-| `Entries.Uninitialized` | `UncertaintyId reason` |
-| `Entries.InitialCondition` | `Place place, InitialValue value, OriginId origin, List<PremiseId> premises` |
-| `Entries.EntryState` | `List<InitialCondition> conditions, List<UncertaintyId> uncertainties` |
-| `Entries.Entry` | `EntryId id, Optional<LabelId> initialLabel, Interactions.Signature signature, EntryState state, OriginId origin` |
-| `Envelopes.MemoryEnvelope` | `List<OperandId> knownReads, Scopes.MemoryBound otherReads, List<OperandId> knownWrites, Scopes.MemoryBound otherWrites, List<OperandId> mustOverwrite` |
-| `Envelopes.ResourceUse` | `String action, Interactions.Target target, Control.ProgramPoint point, OriginId origin` |
-| `Envelopes.DependencyEnvelope` | `List<ResourceUse> known, Scopes.DependencyBound remainder` |
-| `Envelopes.Envelope` | `MemoryEnvelope memory, Control.Envelope control, DependencyEnvelope dependencies` |
-| `Evidence.Claim` | `Scopes.FactScope scope, PrecisionStatus status, List<UncertaintyId> reasons` |
-| `Evidence.Precision` | `Claim control, Claim storage, Claim effects, Claim values, Claim dependencies` |
-| `Evidence.Uncertainty` | `UncertaintyId id, String code, List<Dimension> dimensions, Scopes.FactScope scope, String reason, OriginId origin` |
-| `Evidence.Elimination` | `PremiseId justification, String rule` |
-| `Evidence.CoverageItem` | `String sourceKey, OriginId origin, CoverageStatus status, List<Id> outputs, List<UncertaintyId> uncertainties, Optional<Elimination> elimination` |
-| `Evidence.Coverage` | `InventoryStatus inventory, Scopes.FactScope scope, List<CoverageItem> items, List<UncertaintyId> uncertainties` |
-| `Expressions.Literal` | `Operand.Header header, Values.LiteralValue value` |
-| `Expressions.Read` | `Operand.Header header, Place place` |
-| `Expressions.Unknown` | `Operand.Header header, Types.TypeRef typeRef, List<Expression> dependencies, Scopes.MemoryBound remainingReads, UncertaintyId reason` |
-| `Expressions.Unary` | `Operand.Header header, UnaryOperator operator, Expression argument` |
-| `Expressions.Binary` | `Operand.Header header, BinaryOperator operator, Expression left, Expression right` |
-| `Expressions.Quantize` | `Operand.Header header, Expression value, int scale, Rounding rounding` |
-| `Expressions.FitText` | `Operand.Header header, Expression value, BigInteger length, String pad` |
-| `Expressions.SliceText` | `Operand.Header header, Expression value, Expression start, Expression count, Optional<PremiseId> boundsProof` |
-| `Expressions.TrimRight` | `Operand.Header header, Expression value, String characters` |
-| `Interactions.ContractName` | `ContractId contract` |
-| `Interactions.UnknownName` | `UncertaintyId uncertainty` |
-| `Interactions.InternalTarget` | `EntryId entry` |
-| `Interactions.LiteralTarget` | `String category, String namespace, String name, NamePolicy namePolicy, OriginId origin` |
-| `Interactions.ComputedTarget` | `String category, String namespace, Expression name, NamePolicy namePolicy, OriginId origin` |
-| `Interactions.ResourceTarget` | `ResourceId resource` |
-| `Interactions.Resource` | `ResourceId id, LiteralTarget description` |
-| `Interactions.ValueArgument` | `Expression value` |
-| `Interactions.CopyArgument` | `Expression value` |
-| `Interactions.ReferenceArgument` | `Place place` |
-| `Interactions.Parameter` | `int position, PassingMode mode, Types.TypeRef typeRef, Optional<ObjectId> object, OriginId origin` |
-| `Interactions.ResultSlot` | `int position, Types.TypeRef typeRef, OriginId origin` |
-| `Interactions.Signature` | `List<Parameter> parameters, List<ResultSlot> results, Optional<UncertaintyId> incomplete` |
-| `Interactions.ForeignEffects` | `Scopes.MemoryBound reads, Scopes.MemoryBound writes, List<OperandId> mustOverwrite` |
-| `Interactions.OutcomeEffects` | `Control.OutcomeKey outcome, ForeignEffects effects` |
-| `Interactions.EffectBound` | `ForeignEffects otherwise, List<OutcomeEffects> perOutcome` |
-| `Interactions.Contract` | `ContractId id, String authority, SemanticVersion version, Signature signature, Optional<EffectBound> effects, List<PremiseId> premises, List<UncertaintyId> uncertainties, OriginId origin` |
-| `Interactions.ContractKnowledge` | `Optional<ContractId> contract, Optional<UncertaintyId> unknown` |
-| `Interactions.EntrySignature` | `EntryId entry` |
-| `Interactions.ExternalSignature` | `ContractId contract` |
-| `Memory.BinaryCodec` | `boolean signed, int width, ByteOrder order` |
-| `Memory.ExtensionCodec` | `String name, SemanticVersion version, Types.TypeRef logicalType, ContractId contract` |
-| `Memory.UnknownCodec` | `Types.TypeRef logicalType, UncertaintyId reason` |
-| `Memory.CellBinding` | `StorageId storage` |
-| `Memory.ViewBinding` | `StorageId region, BigInteger offset, BigInteger extent, Codec codec` |
-| `Memory.AliasBinding` | `ObjectId object` |
-| `Memory.AlternativesBinding` | `List<Binding> alternatives, Scopes.MemoryBound remainder` |
-| `Memory.UnknownBinding` | `Scopes.MemoryScope scope, UncertaintyId reason` |
-| `Memory.StorageHeader` | `StorageId id, Optional<UnitId> owner, Lifetime lifetime, Visibility visibility, OriginId origin` |
-| `Memory.Cell` | `StorageHeader header, Types.TypeRef typeRef` |
-| `Memory.Region` | `StorageHeader header, Optional<BigInteger> extent, Optional<UncertaintyId> extentUnknown` |
-| `Memory.ObjectDeclaration` | `ObjectId id, Optional<String> displayName, Types.TypeRef typeRef, Binding storage, Visibility visibility, OriginId origin, Evidence.CoverageStatus coverage, Evidence.Precision precision` |
-| `Memory.ByteRange` | `StorageId region, Expression offset, Expression extent, Optional<PremiseId> boundsProof` |
-| `Operations.Header` | `OperationId id, OriginId origin, Evidence.CoverageStatus coverage, Evidence.Precision precision, List<UncertaintyId> uncertainties` |
-| `Operations.Assign` | `Header header, Place destination, Expression value` |
-| `Operations.HavocMust` | `Header header, Place destination, UncertaintyId reason` |
-| `Operations.HavocMay` | `Header header, Scopes.MemoryScope scope, UncertaintyId reason` |
-| `Operations.Nop` | `Header header` |
-| `Operations.CopyBytes` | `Header header, Memory.ByteRange destination, Memory.ByteRange source, BigInteger length, Envelopes.Envelope fallback` |
-| `Operations.Jump` | `Header header, LabelId destination` |
-| `Operations.Branch` | `Header header, Expression predicate, LabelId trueDestination, LabelId falseDestination` |
-| `Operations.Case` | `Values.LiteralValue value, LabelId destination` |
-| `Operations.Dispatch` | `Header header, Expression selector, List<Case> cases, LabelId defaultDestination` |
-| `Operations.Invoke` | `Header header, String action, Interactions.Target target, List<Interactions.Argument> arguments, List<Place> results, Interactions.EffectBound effectBound, Control.Envelope outcomes, Interactions.ContractKnowledge contract, List<UncertaintyId> signatureGaps` |
-| `Operations.Return` | `Header header, List<Expression> values, List<EntryId> entryScope` |
-| `Operations.Raise` | `Header header, String tag, List<Expression> values` |
-| `Operations.Halt` | `Header header, HaltKind haltKind` |
-| `Operations.Opaque` | `Header header, String observedKind, List<Operand> knownOperands, List<Place> valueResults, Envelopes.Envelope envelope` |
-| `Operations.LocalInvoke` | `Header header, LabelId entry, List<CompletionPortId> completionPorts, LabelId resume, Envelopes.Envelope fallback` |
-| `Operations.LocalBoundary` | `Header header, CompletionPortId port, LabelId defaultDestination, Envelopes.Envelope fallback` |
-| `Operations.LocalResume` | `Header header, Envelopes.Envelope fallback` |
-| `Operations.LocalUnwind` | `Header header, int count, LabelId destination, Envelopes.Envelope fallback` |
-| `Operations.IndirectJump` | `Header header, Expression target, Types.LabelType within, Envelopes.Envelope fallback` |
-| `Origins.Position` | `int line, int column` |
-| `Origins.Span` | `Position start, Position end, int lineBase, int columnBase, ColumnUnit columnUnit, boolean endExclusive` |
-| `Origins.IncludeFrame` | `ArtifactId including, ArtifactId included, String requestedName, Optional<Span> site` |
-| `Origins.Written` | `OriginId id, ArtifactId artifact, Optional<Span> span, List<IncludeFrame> includes, boolean exact` |
-| `Origins.Derived` | `OriginId id, List<OriginId> inputs, String rule` |
-| `Origins.Contractual` | `OriginId id, String authority, String version` |
-| `Origins.Unavailable` | `OriginId id, String reason` |
-| `Origins.Artifact` | `ArtifactId id, String logicalName, Optional<String> contentDigest` |
-| `Places.ObjectPlace` | `Operand.Header header, ObjectId object` |
-| `Places.Choice` | `Operand.Header header, List<Place> candidates, Scopes.MemoryBound remainder, Types.TypeRef typeRef, Optional<PremiseId> knownRemainderDomainProof` |
-| `Places.RegionSlice` | `Operand.Header header, StorageId region, Expression offset, Expression length, Memory.Codec codec, Types.TypeRef typeRef, Optional<PremiseId> accessProof` |
-| `Proofs.ObjectDomain` | `ObjectId object` |
-| `Proofs.CellDomain` | `StorageId cell` |
-| `Proofs.OperandDomain` | `OperandId operand` |
-| `Proofs.ParameterDomain` | `EntryId entry, int position` |
-| `Proofs.ResultDomain` | `EntryId entry, int position` |
-| `Proofs.CallParameterDomain` | `OperationId invocation, Interactions.SignatureTarget signature, int position` |
-| `Proofs.CallResultDomain` | `OperationId invocation, Interactions.SignatureTarget signature, int position` |
-| `Proofs.UnitDomain` | `UnitId unit` |
-| `Proofs.EntryDomain` | `EntryId entry` |
-| `Proofs.OperationDomain` | `OperationId operation` |
-| `Proofs.InvocationDomain` | `OperationId invocation` |
-| `Proofs.Intersection` | `DomainProofScope left, DomainProofScope right` |
-| `Proofs.EntrySite` | `EntryId entry` |
-| `Proofs.OperationSite` | `OperationId operation` |
-| `Proofs.InvocationSite` | `OperationId invocation` |
-| `Proofs.SameDomain` | `DomainSubject left, DomainSubject right, DomainProofScope scope` |
-| `Proofs.DisjointStorage` | `List<StorageId> storage, Scopes.FactScope scope` |
-| `Proofs.SafetyAssertion` | `SafetyProperty property, List<Id> subjects, DomainProofScope scope` |
-| `Proofs.Premise` | `PremiseId id, String authority, String justification, OriginId origin, Assertion assertion` |
-| `Publication` | `PublicationId id, SemanticVersion airVersion, Capabilities.Manifest capabilities, List<Origins.Artifact> artifacts, List<Unit> units, List<Memory.Storage> storage, List<Interactions.Resource> resources, List<Artifacts.Relation> artifactRelations, List<Origins.Origin> origins, Evidence.Coverage coverage, List<Evidence.Uncertainty> uncertainties, List<Proofs.Premise> premises, List<Interactions.Contract> contracts` |
-| `Scopes.PublicationScope` | `PublicationId publication` |
-| `Scopes.UnitScope` | `UnitId unit` |
-| `Scopes.EntityScope` | `List<Id> entities` |
-| `Scopes.ObjectsMemory` | `List<ObjectId> objects` |
-| `Scopes.StorageMemory` | `List<StorageId> storage` |
-| `Scopes.VisibleMemory` | `UnitId unit, boolean includingExternal` |
-| `Scopes.AllMemory` | `PublicationId publication, boolean includingEnvironment` |
-| `Scopes.MemoryUnion` | `List<MemoryScope> members` |
-| `Scopes.WithinMemory` | `MemoryScope scope` |
-| `Scopes.LabelsControl` | `List<LabelId> labels` |
-| `Scopes.UnitControl` | `UnitId unit, boolean labels, boolean normalExit, boolean exceptionalExit, boolean halt, boolean diverge, boolean externalControl` |
-| `Scopes.AllControl` | `PublicationId publication` |
-| `Scopes.ControlUnion` | `List<ControlScope> members` |
-| `Scopes.WithinControl` | `ControlScope scope` |
-| `Scopes.ResourceCategories` | `List<String> categories` |
-| `Sequence` | `LabelId label, List<Instruction> instructions, Terminator terminator, OriginId origin` |
-| `Types.ExtensionType` | `String name, SemanticVersion version` |
-| `Types.LabelType` | `UnitId unit, List<LabelId> labels` |
-| `Types.Known` | `Type type` |
-| `Types.UnknownType` | `UncertaintyId uncertainty` |
-| `Unit` | `UnitId id, Optional<UnitId> containingUnit, List<Memory.ObjectDeclaration> objects, List<ObjectId> visibleObjects, List<Entries.Entry> entries, List<Sequence> sequences, List<Entries.CompletionPort> completionPorts, BodyAvailability body, Optional<UncertaintyId> bodyUnavailable, Evidence.Coverage coverage, OriginId origin` |
-| `Values.BoolValue` | `boolean value` |
-| `Values.IntValue` | `BigInteger value` |
-| `Values.DecimalValue` | `BigInteger coefficient, int scale` |
-| `Values.TextValue` | `String value` |
-| `Values.BytesValue` | `List<Integer> octets` |
-| `Values.LabelValue` | `LabelId label, Types.LabelType domain` |
+| `object(object:ObjectId)`; `cell(cell:StorageId)`; `operand(operand:OperandId)` | Domínio de declaração/local/expressão |
+| `parameter(entry:EntryId,position:Natural)`; `result(entry:EntryId,position:Natural)` | Posição declarada da entrada |
+| `call_parameter(invocation:OperationId,entry:EntryId,position:Natural)`; `call_result(invocation:OperationId,entry:EntryId,position:Natural)` | Posição interna instanciada no site |
+| `external_parameter(invocation:OperationId,position:Natural)`; `external_result(invocation:OperationId,position:Natural)` | Posição externa materializada no próprio invoke |
 
-## Apêndice B — Tokens de enumerações
+`DomainProofScope` usa `publication`, `unit(unit:UnitId)`, `entry(entry:EntryId)`,
+`operation(operation:OperationId)`, `invocation(invocation:OperationId)` ou
+`intersection(left:DomainProofScope,right:DomainProofScope)` finita. As formas e
+sua interseção são exatamente as de 02, §1.4; não há `activation`. Evidência de uma
+chamada não se aplica a outra pela igualdade de autoridade/versão.
 
-Os enums unitários usados como variante (`NoMemory`, `NoControl`, `Propagate` etc.)
-usam os discriminadores descritos acima, não a palavra `INSTANCE`.
+`disjoint_storage` codifica somente a garantia de 03, §3.1: pelo menos duas bases
+distintas, disjunção par a par universal na publicação, sem campo `scope`. Não é
+alias inferido, separação de candidatos abertos nem certificado de validação.
+`same_domain` conserva lacunas e cobre a escolha inteira quando esse for o sujeito.
+Nenhuma dessas formas é `safety`; novas asserções exigem extensão normativa.
 
-| Referência informativa | Tokens |
+## 10. Catálogo dos demais fatos
+
+As tabelas abaixo são definições de transporte. Cada significado vem do documento
+normativo indicado; tipos auxiliares são apenas agrupamentos físicos dos seus fatos.
+
+### 10.1 Publicação, unidades, memória e entrada — AIR 01/03
+
+| Estrutura | Campos ou variantes |
 | --- | --- |
-| `Evidence.Dimension` | `CONTROL, STORAGE, EFFECTS, VALUES, DEPENDENCIES` |
-| `Evidence.PrecisionStatus` | `EXACT, CONSERVATIVE, OPEN, UNAVAILABLE, NOT_APPLICABLE` |
-| `Evidence.CoverageStatus` | `MODELED, ABSTRACTED, UNSUPPORTED, INPUT_MISSING` |
-| `Evidence.InventoryStatus` | `COMPLETE, PARTIAL, UNAVAILABLE` |
-| `Expressions.UnaryOperator` | `NOT, NEG, TO_DECIMAL, LENGTH` |
-| `Expressions.BinaryOperator` | `EQ, NE, LT, LE, GT, GE, AND, OR, ADD, SUB, MUL, CONCAT` |
-| `Expressions.Rounding` | `TOWARD_ZERO, HALF_EVEN` |
-| `Interactions.PassingMode` | `VALUE, REFERENCE, COPY` |
-| `Memory.Lifetime` | `ACTIVATION, PERSISTENT, EXTERNAL` |
-| `Memory.Visibility` | `PRIVATE, SHARED, UNKNOWN` |
-| `Memory.ByteOrder` | `LITTLE, BIG` |
-| `Operations.HaltKind` | `NORMAL, ABNORMAL` |
-| `Origins.ColumnUnit` | `UNICODE_SCALAR, UTF16_CODE_UNIT, OCTET` |
-| `Proofs.SafetyProperty` | `VALID_PURE_ACCESS, VALID_TEXT_SLICE, VALID_CODEC_WRITE, CHOICE_REMAINDER_DOMAIN, EXTENSION_EQUALITY_DEFINED` |
-| `Unit.BodyAvailability` | `AVAILABLE, UNAVAILABLE` |
+| Publication | `id,capabilities,artifacts,units,storage,resources,artifactRelations,origins,coverage,uncertainties,premises`, como seção 2, com tipos dos inventários abaixo |
+| Capability | `{name:Text,version:Text}` |
+| Manifest | `{required:Capability[],provided:Capability[]}` |
+| Artifact | `{id:ArtifactId,logicalName:Text,contentDigest:Text?}` |
+| Unit | `{id:UnitId,containingUnit:UnitId?,objects:Object[],visibleObjects:ObjectId[],entries:Entry[],sequences:Sequence[],completionPorts:CompletionPort[],body:BodyKnowledge,coverage:Coverage,origin:OriginId}` |
+| BodyKnowledge | `available`; `unavailable(uncertainty:UncertaintyId)` |
+| CompletionPort | `{id:CompletionPortId,origin:OriginId}` |
+| Entry | `{id:EntryId,initialLabel:LabelId?,signature:Signature,state:EntryState,origin:OriginId}` |
+| Object | `{id:ObjectId,displayName:Text?,typeRef:TypeRef,storage:StorageBinding,visibility:Visibility,origin:OriginId,coverage:CoverageStatus,precision:Precision}` |
+| StorageHeader | `{id:StorageId,owner:UnitId?,lifetime:Lifetime,visibility:Visibility,origin:OriginId}` |
+| Storage | `cell(header:StorageHeader,typeRef:TypeRef)`; `region(header:StorageHeader,extent:ExtentKnowledge)` |
+| ExtentKnowledge | `known(value:Natural)`; `unknown(uncertainty:UncertaintyId)` |
+| StorageBinding | `cell(storage:StorageId)`; `view(region:StorageId,offset:Natural,extent:Natural,codec:Codec)`; `alias(object:ObjectId)`; `alternatives(alternatives:StorageBinding[],remainder:MemoryBound)`; `unknown(scope:MemoryScope,reason:UncertaintyId)` |
+| Codec | `bytes.identity`; `text.ascii`; `unsigned.binary(width:Natural,order:ByteOrder)`; `signed.twos_complement(width:Natural,order:ByteOrder)`; `extension(name:Text,version:Text,logicalType:TypeRef)`; `unknown(logicalType:TypeRef,reason:UncertaintyId)` |
+| ByteRange | `{region:StorageId,offset:Expression,extent:Expression}` |
+| EntryState | `{conditions:InitialCondition[],uncertainties:UncertaintyId[]}` |
+| InitialCondition | `{place:Place,value:InitialValue,origin:OriginId,premises:PremiseId[]}` |
+| InitialValue | `literal(value:LiteralExpression)`; `parameter(position:Natural)`; `preserve`; `external_unknown(reason:UncertaintyId)`; `uninitialized(reason:UncertaintyId)` |
+| Resource | `{id:ResourceId,description:ResourceDescription,origin:OriginId}` |
+| ResourceDescription | Target interno/literal; para calculado, os mesmos campos de Target calculado com `name:OperandId` em vez de Expression |
+| ArtifactRelation | `{id:ArtifactRelationId,source:ArtifactId,destination:RelationTarget,relationKind:Text,origin:OriginId,coverage:CoverageStatus}` |
+| RelationTarget | `internal(artifact:ArtifactId)`; `external(resource:LiteralTarget)` |
+
+`Capability.version` conserva a versão declarada pelo manifesto: nas capacidades
+padronizadas, `"1"` codifica `@1`; nos perfis desta edição, `"2"` codifica `@2`.
+Não se extrai automaticamente só o major de uma versão de extensão arbitrária.
+
+`LiteralValue` é uma das formas de valor da seção 3. `LiteralExpression` é
+Expression de `kind:"literal"`; `LiteralTarget` é Target de `kind:"literal"`. O literal e Place de condição inicial pertencem à entrada. A origem
+contratual da condição já pode evidenciar um seed; não exige uma premissa `safety`.
+
+`initialLabel=null` é permitido apenas na declaração de entrada cujo corpo está
+explicitamente indisponível. Label presente sempre fecha sobre sequência da unidade.
+Corpo disponível exige entradas/sequências. Armazenamento `ACTIVATION` exige unidade
+proprietária. Ausência de proprietário em storage externo não é identidade desconhecida.
+
+Os quatro codecs padronizados são versão `@1`, coberta por `memory.regions@1`;
+não usam parâmetros implícitos de ambiente. Codecs binários exigem largura positiva
+múltipla de oito. `ByteRange.extent` delimita o intervalo; `copy_bytes.length` não
+pode excedê-lo. Índices/comprimentos calculados conservam ocorrências e tipos.
+
+`ResourceDescription` calculada referencia a ocorrência de nome já definida numa
+operação e seu ponto de avaliação; a declaração não a executa novamente nem captura
+seu valor. A descrição não cria uma variante de target por ResourceId. Uma relação
+estrutural usa nome literal, sem estado dinâmico necessário para interpretá-la.
+
+### 10.2 Envelopes e pontos — AIR 04/05/06
+
+| Estrutura | Campos ou variantes |
+| --- | --- |
+| Envelope | `{memory:MemoryEnvelope,control:ControlEnvelope,dependencies:DependencyEnvelope}` |
+| MemoryEnvelope | `{knownReads:OperandId[],otherReads:MemoryBound,knownWrites:OperandId[],otherWrites:MemoryBound,mustOverwrite:OperandId[]}` |
+| ForeignEffects | `{reads:MemoryBound,writes:MemoryBound,mustOverwrite:OperandId[]}` |
+| EffectBound | `{otherwise:ForeignEffects,perOutcome:OutcomeEffects[]}` |
+| OutcomeEffects | `{outcome:OutcomeKey,effects:ForeignEffects}` |
+| InvocationOutcomes | `{known:InvocationAlternative[],remainder:ControlBound}` |
+| InvocationAlternative | `normal(label:LabelId)`; `exception(tag:Text,destination:ExceptionDestination)`; `any_exception(destination:ExceptionDestination)`; `halt`; `diverge` |
+| ControlEnvelope | `{known:ControlAlternative[],remainder:ControlBound}` |
+| ControlAlternative | InvocationAlternative ou `jump(label:LabelId)`; `return`; `continue` |
+| ExceptionDestination | `handler(label:LabelId)`; `propagate` |
+| DependencyEnvelope | `{known:ResourceUse[],remainder:DependencyBound}` |
+| ResourceUse | `{action:Text,target:ResourceDescription,point:ProgramPoint,origin:OriginId}` |
+| ProgramPoint | `before(operation:OperationId)`; `after(operation:OperationId,outcome:OutcomeKey)`; `entry(entry:EntryId)`; `exit(unit:UnitId,outcome:OutcomeKey)` |
+| OutcomeKey | `normal`; `exception(tag:Text)`; `other_exception`; `halt`; `diverge` |
+| MemoryBound | `none`; `within(scope:MemoryScope)` |
+| MemoryScope | `objects(objects:ObjectId[])`; `storage(storage:StorageId[])`; `visible(unit:UnitId,includingExternal:Bool)`; `all(publication:PublicationId,includingEnvironment:Bool)`; `union(members:MemoryScope[])` |
+| ControlBound | `none`; `within(scope:ControlScope)` |
+| ControlScope | `labels(labels:LabelId[])`; `unit(unit:UnitId,labels:Bool,normalExit:Bool,exceptionalExit:Bool,halt:Bool,diverge:Bool,externalControl:Bool)`; `all(publication:PublicationId)`; `union(members:ControlScope[])` |
+| DependencyBound | `none`; `any_resource`; `categories(categories:Text[])` |
+
+As flags de `ControlScope.unit` incluem os conjuntos indicados em 05, §6; `labels`
+inclui todos os labels da unidade, inclusive os de entrada. `ControlScope.all`
+codifica `any_control`, inclusive ambiente. Excluir parte externa de memória
+exige a garantia normativa de confinamento; não é default da codificação.
+
+`InvocationOutcomes` tem no máximo um normal, tags únicas e no máximo um catch-all;
+`ControlEnvelope` pode ter vários destinos. `continue` só é permitido no fallback
+de operação comum, como `copy_bytes`; não é fallthrough de terminador. `return`
+é saída da unidade. `normal(label)` não codifica essa saída. Restante aberto não
+é um outcome finito chamado `unknown` e não é eliminado por redundância.
+
+Chaves de `perOutcome` são únicas e correspondem aos resultados admitidos; a regra
+`otherwise` cobre os demais, inclusive fronteira aberta. `other_exception` é o
+restante de tags, sem competir com tag específica. Menção a outcome/ponto não é
+prova de alcançabilidade; divergência não fabrica um próximo estado.
+
+Em uso calculado de `DependencyEnvelope`, o operando de nome pertence à operação
+do envelope e o ponto é `before` dessa operação. Referir ocorrência de outra
+operação não simula captura; a declaração global de recurso apenas descreve o uso
+em seu ponto original.
+
+Referências de leitura/escrita no envelope fecham sobre operandos da operação;
+escritas e sobrescritas designam Places. Leitura conhecida pode referir uma leitura
+ou Place cujo conteúdo é declarado lido. Os limites adicionais são superiores,
+não escritas obrigatórias. Envelopes de extensão não contam nova execução.
+
+### 10.3 Origem, cobertura e precisão — AIR 06
+
+| Estrutura | Campos ou variantes |
+| --- | --- |
+| Origin | `written(id:OriginId,artifact:ArtifactId,location:Location?,includes:IncludeFrame[],exact:Bool)`; `derived(id:OriginId,inputs:OriginId[],rule:Text)`; `contractual(id:OriginId,authority:Text,version:Text)`; `unavailable(id:OriginId,reason:Text)` |
+| Location | `line_columns(span:Span)`; `offsets(start:Natural,end:Natural,unit:Text,endExclusive:Bool)` |
+| Position | `{line:Natural,column:Natural}` |
+| Span | `{start:Position,end:Position,lineBase:Natural,columnBase:Natural,columnUnit:ColumnUnit,endExclusive:Bool}` |
+| IncludeFrame | `{including:ArtifactId,included:ArtifactId,requestedName:Text,site:Location?}` |
+| FactScope | `publication(publication:PublicationId)`; `unit(unit:UnitId)`; `entities(entities:Id[])` |
+| Uncertainty | `{id:UncertaintyId,code:Text,dimensions:Dimension[],scope:FactScope,reason:Text,origin:OriginId}` |
+| Coverage | `{inventory:InventoryStatus,scope:FactScope,items:CoverageItem[],uncertainties:UncertaintyId[]}` |
+| CoverageItem | `{sourceKey:Text,origin:OriginId,status:CoverageStatus,outputs:Id[],uncertainties:UncertaintyId[],elimination:Elimination?}` |
+| Elimination | `{rule:Text,origin:OriginId}` |
+| Claim | `{scope:FactScope,status:PrecisionStatus,reasons:UncertaintyId[]}` |
+| Precision | `{control:Claim,storage:Claim,effects:Claim,values:Claim,dependencies:Claim}` |
+
+`Id` é qualquer domínio admitido na seção 4. Coordenadas preservam a base/unidade
+publicada. `offsets` usa base zero e declara a unidade (por exemplo `octet`,
+`unicode_scalar` ou `utf16_code_unit`; outra unidade exige interpretação explícita
+negociada). Offsets conhecidos sem linha/coluna não exigem coordenadas fabricadas;
+localização de origem não é intervalo de storage. `derived.inputs` é não vazio;
+`unavailable` não é origem ausente. `Elimination` transporta regra e evidência da
+eliminação já exigida por PROD-02/I-29; texto da regra não define operação nova.
+`sourceKey`, mensagens e nomes de exibição são opacos ao consumidor semântico.
+
+### 10.4 Tokens
+
+Os tokens abaixo são escolhas lexicais para os conceitos AIR; não são nomes de enums
+Java. Códigos de incerteza são os de AIR 06, §4, mais códigos qualificados permitidos.
+Ações padrão são as de AIR 04, §7; categorias e relações, as de AIR 01, §§7–8.
+
+| Tipo | Tokens |
+| --- | --- |
+| Dimension | `CONTROL, STORAGE, EFFECTS, VALUES, DEPENDENCIES` |
+| PrecisionStatus | `EXACT, CONSERVATIVE, OPEN, UNAVAILABLE, NOT_APPLICABLE` |
+| CoverageStatus | `MODELED, ABSTRACTED, UNSUPPORTED, INPUT_MISSING` |
+| InventoryStatus | `COMPLETE, PARTIAL, UNAVAILABLE` |
+| UnaryOperator | `NOT, NEG, TO_DECIMAL, LENGTH` |
+| BinaryOperator | `EQ, NE, LT, LE, GT, GE, AND, OR, ADD, SUB, MUL, CONCAT` |
+| Rounding | `TOWARD_ZERO, HALF_EVEN` |
+| PassingMode | `VALUE, REFERENCE, COPY` |
+| Lifetime | `ACTIVATION, PERSISTENT, EXTERNAL` |
+| Visibility | `PRIVATE, SHARED, UNKNOWN` |
+| ByteOrder | `LITTLE, BIG` |
+| HaltKind | `NORMAL, ABNORMAL` |
+| ColumnUnit | `UNICODE_SCALAR, UTF16_CODE_UNIT, OCTET` |
+| OperandRole | `VALUE_READ, VALUE_WRITE, ADDRESS_READ, PREDICATE, CALL_TARGET, ARGUMENT_VALUE, ARGUMENT_REFERENCE, RESULT_TARGET, RESOURCE_TARGET, CONTROL_TARGET` |
+
+## 11. Validação e campos desconhecidos
+
+1. Verificar bytes, propriedades únicas, campos obrigatórios, formas e versões.
+   Erro léxico/estrutural de JSON é `INPUT_ERROR`.
+2. Materializar exatamente os fatos, sem inferir fatos faltantes. Referência
+   quebrada, tipo contraditório ou outra violação AIR é `INVALID_IR`, com regra/site.
+3. Validar as regras AIR implementadas e registrar obrigações/limites. Um schema
+   de JSON não prova `sameDomain`, pureza, separação física ou verdade de lowering.
+   `INCOMPLETE_VALIDATION` não é aprovação integral nem permissão para reparar fatos.
+4. Negociar capacidades. Sem suporte preciso, usar fallback já presente e permitido
+   ou emitir `UNSUPPORTED_CAPABILITY`; nunca ignorar operação/campo semântico.
+
+Campos, discriminadores e tokens fechados não catalogados são rejeitados, sem
+selecionar defaults. Versões não suportadas produzem incompatibilidade explícita.
+Códigos/categorias qualificados só são aceitos onde a AIR autoriza extensão, com
+negociação pertinente. O decoder não habilita desserialização arbitrária de runtime.
+
+## 12. I/O e round-trip
+
+O envelope contém uma Publication indivisível, com uma ou várias unidades. Publicações
+diferentes não se juntam por coincidência de IDs locais. Streaming e índices privados
+são permitidos; fechamento deve ser verificado antes de disponibilizar os fatos.
+Limite de tempo/memória/cardinalidade é falha explícita, não prefixo válido.
+
+`decode(encode(P))` preserva todos os fatos AIR, identidades, evidências, restantes e
+ordens semânticas. Para documento aceito `J`, `encode(decode(J))` é a forma canônica
+com os mesmos dados e ordem física de arrays; whitespace/ordem de propriedades não
+são dados AIR. Igualdade semântica de dois decimais não apaga a representação
+coeficiente/escala transportada. Nenhum dos percursos remove unknown em favor de null.
+
+Um writer de arquivo pode escrever temporário e substituir o destino após escrita
+completa, conforme garantias do filesystem. Essa escolha de I/O não muda o contrato
+semântico e não autoriza entregar conteúdo parcialmente publicado.
+
+## 13. Oráculos para promoção e codecs
+
+- Escritas repetidas de publicação com mesma ordem física geram bytes idênticos;
+  permutar inventários não cria nova ordem de execução.
+- Round-trip conserva IDs completos, TypeRef, valores, origens, premissas, assinatura
+  externa por site, efeitos, outcomes e todos os restantes.
+- Dois sites com a mesma autoridade contratual mantêm posições/sujeitos separados;
+  remover acesso à autoridade não altera a decodificação ou as observações.
+- Inteiros e escalas acima de 2^53, bytes 00/FF, texto vazio, padding, Unicode
+  suplementar, offsets de origem sem linha/coluna e ausência explícita sobrevivem
+  sem limites de tipos de runtime.
+- Propriedades duplicadas, `null` no lugar de unknown, campos omitidos, segundo
+  documento, tokens privados de Validator e versões desconhecidas falham explicitamente.
+- Contracasos de AIR O-82 a O-91 conservam diagnóstico/regra, inclusive escolha aberta,
+  escopo errado, `ResourceId` como target, separação sem evidência e outcome duplicado.
+- `copy_bytes` comum conserva `continue` em fallback sem terminador fictício;
+  `opaque` não aceita esse fallthrough e conserva saltos/saídas/restantes.
+- Consumo da mesma publicação construída em memória e decodificada produz observações
+  equivalentes sob perfis/premissas idênticos; esta obrigação não implementa CFG/RD/values.
+- Pelo menos duas implementações independentes verificam os casos de transporte antes
+  de alegar interoperabilidade; conhecer Java não pode ser requisito de nenhuma delas.
+
+Esses são requisitos a demonstrar, não resultados já obtidos. O handoff registra
+as incompatibilidades da candidata anterior e o trabalho separado em `air-java`.

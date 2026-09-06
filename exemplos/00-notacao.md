@@ -6,7 +6,7 @@
 
 Os blocos `air` ilustram a sintaxe abstrata da especificação. Não definem um formato de intercâmbio, parser, linguagem de implementação ou API. Todos os seus elementos têm significado nos documentos normativos. A notação omite repetição de metadados, não fatos semânticos necessários aos resultados esperados.
 
-Cada cenário X-01 a X-40 é uma publicação independente. Variantes dentro do mesmo cenário são explicitamente independentes quando indicado. As consultas escritas após os blocos são resultados de consumers, **não conteúdo da IR**.
+Cada cenário X-01 a X-41 é uma publicação independente. Variantes dentro do mesmo cenário são explicitamente independentes quando indicado. As consultas escritas após os blocos são resultados de consumers, **não conteúdo da IR**.
 
 ## 2. Identificadores e abreviações
 
@@ -34,6 +34,8 @@ Todo uso abreviado de `unknown(R)` tem razão de valor `SOURCE_SEMANTICS_UNAVAIL
 ## 3. Declarações de células
 
 `cell @x : R` abrevia uma declaração nominal e sua célula própria com o mesmo `TypeRef=R` e duração `activation`. `cell @x : T` com `T: Type` usa `known(T)`. **Nos exemplos que a usam**, a independência em relação às demais células é uma premissa expressa do cenário. Ela não pode ser generalizada para declarações reais apenas por nomes diferentes.
+
+Essa abreviação materializa `disjoint_storage` sobre as bases distintas declaradas independentes, quando há pelo menos duas, com `PremiseId`, autoridade e origem do cenário e a garantia universal de 03, §3.1. Aliases que compartilham uma base não são membros distintos; exemplos de associação aberta não herdam separação para seu restante. A notação não importa o campo genérico de escopo de uma implementação.
 
 `alias @y : T = @x` associa outro objeto ao mesmo armazenamento. `region @r : bytes[n]` declara região de n octetos. `view @v : T = @r[o:n] codec=C` declara vista com codec explícito. Toda associação/intervalo mostrado é conhecido, salvo marcação contrária. Nomes de portas utilizados em `local.boundary` abreviam suas declarações no namespace da unidade; as referências em `completion` apontam para essas declarações.
 
@@ -69,6 +71,10 @@ normal(^done), any_exception(^fault), halt, diverge; remainder=none
 O cenário assume que a forma de interação exclui saltos arbitrários para o interior do chamador; não assume que retorna sempre. `visible` inclui armazenamento da unidade potencialmente acessível e ambiente externo. Essa hipótese de controle deve ser ampliada quando não puder ser sustentada por um produtor.
 
 `normal ^next` substitui apenas a continuação normal. `effects=none [C-PURE]` identifica contrato explícito de ausência de efeitos no armazenamento do chamador/compartilhado; não é default. `effects=may_write(@x)` restringe escritas a x, declara outras escritas vazias e mantém somente as leituras explicitadas ou dos operandos. Um contrato restritivo é premissa do cenário, não conclusão de análise.
+
+`[C-PURE]` e outros nomes de contrato abreviam `ContractRef` com autoridade do cenário, versão `1` e origem contratual própria. Não são `ContractId` nem inventário `contracts`. A assinatura externa fica materializada no próprio site, junto de efeitos/outcomes; a assinatura interna referencia a entrada. Uma declaração textual `signature nome: ...` é abreviação dos fatos nos sites indicados, não uma entidade adicional. Posições numéricas dos exemplos começam em 1; um binding pode codificá-las a partir de 0 por correspondência explícita, sem alterar ordem.
+
+A interação comum tem zero argumentos/resultados observados e não alega conhecer uma assinatura externa: seus inventários de assinatura são abertos com `CONTRACT_UNKNOWN`, salvo assinatura expressamente estabelecida pelo cenário. Um contrato parcial não fecha aridade apenas por ter nome. As abreviações que estabelecem posições/resultados declaram esses fatos localmente; qualquer parte não estabelecida conserva restante/lacuna.
 
 Para outras categorias, o namespace é `example.<categoria>` e a ação deve ser indicada. A notação `results=[@x]` usa assinatura externa de mesmo domínio conhecido de x; seus resultados só são escritos no retorno normal. Cenários com `unknown_type` DEVEM explicitar a assinatura e as provas de `sameDomain` para transmissão precisa, ou o contrato conservador quando faltarem, sem herdar compatibilidade presumida dessa abreviação.
 

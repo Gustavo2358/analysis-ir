@@ -48,6 +48,8 @@ Um limite de escrita superior indica `may_write`, não `must_write`. Um campo de
 
 Uma continuação normal conhecida deve constar como tal. Ausência de arestas conhecidas com restante aberto não é término. Comportamento sem próximo ponto, como divergência, deve estar explícito.
 
+As alternativas distinguem `normal(label)` (continuação local), `jump(label)` (transferência local), `return` (saída normal da unidade), `exception(tag,destination)`, `any_exception(destination)`, `halt` e `diverge`. Destino excepcional é label local ou propagação. Em fallback de extensão **comum**, `continue` designa o ponto seguinte à própria operação na sequência, conforme 04, §1; não exige dividir a sequência. `continue` não é permitido para `opaque` ou outro terminador. Labels não adquirem fallthrough pela ordem física. O envelope pode ter vários destinos conhecidos, diferentemente de `InvocationOutcomes`; enumerar alternativas nunca executa o fallback como segunda operação.
+
 ### 3.3 Dependências
 
 `DependencyEnvelope` contém usos de recurso conhecidos e limite de outros usos. Um uso conhecido identifica categoria, ação, namespace, target literal ou operando calculado, ponto de observação e origem.
@@ -87,6 +89,16 @@ A origem de um fato pode ser `WRITTEN`, `DERIVED`, `CONTRACT` ou `UNAVAILABLE`. 
 Cada operação, operando, declaração, relação de artefato e lacuna deve ter origem ou `UNAVAILABLE` explícito. Origem aproximada é permitida, mas sua exatidão não pode ser promovida por agregação. O conteúdo-fonte completo não precisa acompanhar a IR.
 
 Metadados de diagnóstico podem conservar grafias e nomes da construção de origem. Consumidores não devem analisá-los para obter semântica. Remover metadados de exibição não pode alterar resultados semânticos; remover origem reduz explicabilidade e pode violar o perfil declarado.
+
+### 5.1 Premissas e obrigações de validação
+
+Uma `Premise` contém identidade, autoridade, justificativa, origem e asserção com significado normativo. As formas tipadas do núcleo são `sameDomain`, conforme 02, e `disjoint_storage`, conforme 03, §3.1. Seus escopos são próprios: os sites de `DomainProofScope` não substituem a garantia de separação válida na publicação inteira. Outras garantias já têm conteúdo nos fatos pertinentes — por exemplo, um literal de `EntryState`, um limite de efeitos ou um outcome fechado — e conservam ali origem contratual e lacunas. Não se exige duplicá-las numa asserção genérica para que tenham significado.
+
+O núcleo não define `SafetyAssertion`/`SafetyProperty`, nem tokens `VALID_PURE_ACCESS`, `VALID_TEXT_SLICE`, `VALID_CODEC_WRITE`, `CHOICE_REMAINDER_DOMAIN` ou `EXTENSION_EQUALITY_DEFINED`. Pureza, totalidade de recorte e validade de codec continuam precondições e obrigações do produtor (I-09/I-46); sua evidência pode ser examinada por um validador, mas o nome de um teste não é fato que prove a precondição. Uma garantia de domínio sobre a escolha inteira usa `sameDomain` com os sujeitos/escopos de 02; igualdade de valores de extensão exige o manifesto da extensão. Nenhuma dessas obrigações desaparece pela remoção de uma classe de implementação.
+
+Não existem campos semânticos `boundsProof`, `accessProof` ou `knownRemainderDomainProof` nas formas de expressão/local do núcleo. Os fatos e premissas aplicáveis são identificáveis na publicação sem apontador obrigatório para um teste particular. Um validador pode manter certificados, índices e diagnósticos em sua evidência separada, registrar `INCOMPLETE_VALIDATION` quando não concluir uma obrigação e rejeitar contradições conhecidas. Não pode exigir seus certificados privados de todo produtor, aceitar uma precondição falsa por causa de um token, nem confundir validade da forma com verdade externa.
+
+Uma nova linguagem de provas/precondições precisaria de motivação bilateral, sintaxe, semântica, oráculos e negociação próprios conforme 09. Texto livre de autoridade/justificativa não permite acrescentá-la silenciosamente a uma premissa do núcleo ou a um transporte.
 
 ## 6. Fatos conhecidos e restante desconhecido
 

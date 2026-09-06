@@ -236,3 +236,26 @@ Nas variantes aplicáveis, a regra de `read` permite concluir `sameDomain(@c,rea
 Para uma premissa com sujeitos apropriados à chamada, `intersection(operation(k),invocation(k))` cobre apenas `invocation_site(k)`: não cobre `operation_site(k)`, `entry_site(eV)`, `operation_site(r)` ou `invocation_site(k2)`. `unit(U)` inclui ambos os sites de `k`, mas não os sites de `V`; contenção de uma unidade tampouco transfere essa cobertura. `publication` inclui todos esses sites sem identificar seus sujeitos entre si. Repetição/recursão reaplica os fatos universalmente sem identificar ativações; nenhum escopo promete alcançabilidade.
 
 Contracasos de formação: `invocation(other)`, `unit` referindo um `EntryId`, referência a ID inexistente, forma `activation(U)` e composição circular/não finita são inválidos, mesmo em premissa não utilizada. Uma condição textual de caminho ou uma garantia apenas da primeira execução de `k` não pode substituir `DomainProofScope`.
+
+## X-41 — Contrato externo materializado no site
+
+A unidade possui células independentes `@x : unknown_type(u)` e `@y : unknown_type(v)`, com lacunas e origens próprias. A autoridade `example.inspect`, versão `rev-1`, estabelece uma posição por valor e um resultado normal, de domínios não identificados. Seus efeitos são vazios além do resultado; admite retorno, exceção, término e divergência. O cenário não fornece `sameDomain` entre argumento/parâmetro ou resultado/destino, portanto usa a transmissão conservadora de 04, §7.1.
+
+```air
+origin c: CONTRACT authority=example.inspect version=rev-1
+^entry:
+  k: invoke service literal("INSPECT") action=call
+     arguments=[value(read(@x))] results=[@y]
+     signature=external(
+       parameters={known:[1:value:unknown_type(u)],remainder:none},
+       results={known:[1:unknown_type(v)],remainder:none})
+     contract={authority:example.inspect,version:rev-1,evidence:[c]}
+     effects=none
+     outcomes={normal(^done),any_exception(^fault),halt,diverge; remainder=none}
+```
+
+A aridade é conhecida apesar dos tipos desconhecidos. `external_parameter(k,1)` e `external_result(k,1)` identificam essas posições; repetir a razão `u`/`v` nos objetos não cria prova. As origens das posições e dos fatos são contratuais do cenário; `c` explica a autoridade, enquanto a assinatura, os limites e os outcomes fornecem a semântica, sem consultar `example.inspect`. Não existe declaração `Contract` top-level.
+
+Variantes independentes: assinatura indisponível usa `known:[]` com `remainder=unknown(g)` em cada direção, preservando os argumentos/resultados observados e as garantias da interação. As lacunas `g` são declaradas por direção com código `CONTRACT_UNKNOWN` e origem da indisponibilidade. Autoridade desconhecida usa `contract=unknown(c_unknown)`, também com lacuna `CONTRACT_UNKNOWN` declarada; não muda fatos sustentados por outra evidência. Acrescentar `k2` com a mesma autoridade não reutiliza sujeitos/provas limitados a `k`. Uma premissa de transmissão precisa em `k` deve identificar suas ocorrências/posições e ter escopo `invocation(k)`; não nasce do nome INSPECT.
+
+Como contracasos, remover a origem `c`, referir uma posição inexistente ou usar `ResourceId` como target viola fechamento/modelo. Alterar o contrato da autoridade exige nova publicação com fatos revalidados, não atualização preguiçosa desta publicação imutável.

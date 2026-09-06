@@ -4,7 +4,7 @@
 
 ## 1. Unidade de extensão
 
-A extensão acrescenta uma capacidade semântica tipada e versionada. Não acrescenta campos singleton ao envelope fundamental para cada construção-fonte. Pode definir operações, tipos, codecs, categorias de recurso ou relações, desde que mantenha as fronteiras da IR.
+A extensão acrescenta uma capacidade semântica tipada e versionada. Não acrescenta campos singleton ao envelope fundamental para cada construção-fonte. Pode definir operações, tipos, codecs, políticas de interpretação de nomes, categorias de recurso ou relações, desde que mantenha as fronteiras da IR.
 
 Um identificador de extensão é qualificado por autoridade e nome. Identificadores `core.*`, `memory.regions`, `control.local` e `control.indirect` são reservados a esta especificação. A publicação identifica versão requerida de cada capacidade efetivamente usada.
 
@@ -70,6 +70,16 @@ O fechamento de `DomainProofScope`, sua aplicabilidade/interseção e a quantifi
 Na migração, um domínio `T` estabelecido passa a `known(T)`, inclusive tipos de extensão. Um fato realmente sem domínio concreto estabelecido passa a `unknown_type(u)` com lacuna explícita; não se renomeia um domínio de extensão para representar essa ausência. Cópias conhecidas usam prova de `sameDomain` quando disponível; operações que interpretem o domínio exigem o tipo concreto. Construções sem suas precondições precisam de abstração com envelopes e operandos preservados. Publicações devem ser revalidadas; um consumidor 1.0.0 não recebe garantia automática de fallback para as novas formas.
 
 Os perfis passam a `@2` para refletir as obrigações de `TypeRef` e os novos oráculos, inclusive perfis que herdam o modelo estrutural. As extensões padronizadas mantêm `memory.regions@1`, `control.local@1` e `control.indirect@1`: suas regras próprias de bytes/codecs, frames e labels não mudam; nesta edição são usadas sob o contrato de núcleo 2.0.0. Sua versão isolada não autoriza compatibilidade entre versões major da publicação.
+
+### 5.2 Fechamento do modelo antes da estabilização da 2.0.0
+
+A edição 2.0.0 permanece **em fechamento antes de sua publicação estabilizada**, como já registrado em §5.1. A revisão do binding explicita obrigações semânticas: assinatura externa materializada por `invoke` e seus sujeitos de domínio; `ContractRef` como valor de autoridade/versão/evidência sem `ContractId` ou inventário `contracts`; identidade/ownership das relações e ocorrências; forma declarativa de separação entre bases; distinções de envelopes. Não são mudanças meramente editoriais, nem passam a ser normativas porque apareceram em JSON ou numa implementação.
+
+Esses ajustes integram a mesma edição ainda não estabilizada e conservam **AIR 2.0.0 e perfis @2**. Implementações/publicações baseadas no snapshot anterior devem ser reconciliadas e revalidadas; não se alega compatibilidade estrutural automática entre snapshots de trabalho. A ausência de tags, sozinha, não justificaria essa decisão: a condição relevante é o estado pré-publicação explicitamente registrado nesta política. Uma implementação existente não estabiliza unilateralmente a AIR.
+
+Se a 2.0.0 já fosse contrato estabilizado, mudanças dessas formas obrigatórias de identidade, assinatura, premissa e validade exigiriam **major**, conforme §5; não seriam `2.0.1` editorial nem `2.1.0` opcional. Uma futura capacidade de provas ou inventário de contratos isolada e explicitamente negociada poderia ser avaliada como extensão/minor, desde que não substituísse obrigações do núcleo anterior. Essa alternativa não é adotada aqui.
+
+O [Analysis IR JSON Binding 1.0.0](../bindings/json-v1.md) é **DRAFT**, destinado a AIR 2.0.0. Sua versão identifica o contrato de transporte e não estabiliza a versão semântica nem a biblioteca de qualquer linguagem. Promoção para `NORMATIVE / ACCEPTED` requer revisão explícita do binding e evidência de seus oráculos; este conjunto não anuncia essa promoção. Mudanças incompatíveis nesta candidata devem ser identificadas no handoff, sem prometer leitura do JSON anterior.
 
 ## 6. Negociação
 

@@ -81,7 +81,7 @@ view @destination : text = @packet[4:8] codec=text.ascii@1
 
 Antes de k, `PV(@destination)={"PGMA    "}; remainder=false`. O byte de offset 3 continua desconhecido; isso não invalida a fatia [4,12). O pacote completo não é conhecido.
 
-Um consumidor que possui contrato de protocolo dizendo que a ação RUN interpreta [4,12) como nome com padding de espaço pode consultar a fatia e derivar PGMA. Sem esse contrato, a IR sustenta apenas chamada ao serviço ROUTER e o conteúdo do argumento; não inventa a dependência indireta. O protocolo não é embutido na IR.
+Um consumidor especializado cuja consulta declara contrato de protocolo dizendo que a ação RUN interpreta [4,12) como nome com padding de espaço pode consultar a fatia e derivar PGMA. Esse contrato é autoridade adicional da consulta derivada, com versão/evidência e cobertura declaradas; não completa por lookup o `ContractRef` da publicação original. Sem esse contrato, a IR sustenta apenas chamada ao serviço ROUTER e o conteúdo do argumento; não inventa a dependência indireta. Para publicar essa regra como semântica precisa de IR, seria necessário manifesto de extensão negociado, conforme 09.
 
 ## X-16 — Cópia de bytes sobrepostos
 
@@ -127,7 +127,7 @@ Este cenário substitui a entrada comum e declara duas entradas de uma unidade.
 
 ```air
 cell @target : text lifetime=persistent
-entry @fresh -> ^fresh state={@target:text("BOOT")} premise=FRESH_STATE
+entry @fresh -> ^fresh state={@target:text("BOOT")} origin=contract:FRESH_STATE
 entry @resume -> ^resume state={@target:external_unknown}
 ^fresh:
   f: invoke program dynamic(read(@target))
@@ -135,7 +135,7 @@ entry @resume -> ^resume state={@target:external_unknown}
   r: invoke program dynamic(read(@target))
 ```
 
-Na entrada fresh, o estado conhecido é uma premissa explícita dessa entrada: `PV(before(f))={"BOOT"}`. Em resume, o estado persistente anterior não é conhecido: `PV(before(r))={}; remainder=true`. A presença de valor inicial em uma declaração de origem não autoriza reaplicá-lo a resume. Uma consulta agregada entre entradas deve manter essa distinção de escopo.
+Na entrada fresh, o estado conhecido é uma garantia explícita materializada no `EntryState`, com origem contratual `FRESH_STATE`, sem criar variante adicional de `Premise`: `PV(before(f))={"BOOT"}`. Em resume, o estado persistente anterior não é conhecido: `PV(before(r))={}; remainder=true`. A presença de valor inicial em uma declaração de origem não autoriza reaplicá-lo a resume. Uma consulta agregada entre entradas deve manter essa distinção de escopo.
 
 ## X-20 — Truncamento e arredondamento não são cópia de identidade
 

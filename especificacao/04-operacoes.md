@@ -86,6 +86,7 @@ invoke(
   target: InternalEntry | LiteralResource | ComputedResource,
   arguments: Argument[],
   results: Place[],
+  signature: entry(EntryId) | external(Signature),
   effectBound: ForeignEffectBound,
   outcomes: InvocationOutcomes,
   contract: ContractRef | unknown
@@ -134,6 +135,20 @@ Esses limites são premissas contratuais, não um resumo de análise calculado d
 
 Um destino normal significa que a chamada **pode** retornar ali; não promete que sempre retorna. Ausência comprovada de retorno normal é diferente de comportamento desconhecido. Se houver resultados normais, `results` deve corresponder à assinatura; na saída excepcional não há escrita implícita desses resultados.
 
+### 7.4 Materialização de contratos e assinaturas
+
+`signature` explicita onde estão os fatos de assinatura já exigidos por §7.1. Para target interno, `entry(e)` DEVE referir exatamente a entrada do target, inclusive quando o corpo está indisponível; usa sua assinatura declarada. Para target literal/calculado, `external(s)` contém a assinatura normalizada **nesta ocorrência de `invoke`**. Não é uma enumeração de targets calculados nem requer um corpo fictício.
+
+Uma `Signature` contém inventários separados de parâmetros e resultados. Cada inventário conserva posições identificadas e ordenadas e um restante `none` ou `unknown(UncertaintyId)`. Uma posição de parâmetro contém modo conhecido (`value`, `reference`, `copy`) ou modo desconhecido com lacuna, `TypeRef` e origem; posição de resultado contém `TypeRef` e origem. Posições são únicas em sua direção. Restante fechado exige todas as posições, sem lacunas de cardinalidade. Uma posição com `unknown_type` é uma posição presente, não um restante de aridade. Quantidade/assinatura desconhecida não é lista vazia fechada. Uma entrada declara ainda o objeto/vínculo de inicialização quando conhecido; vínculo desconhecido conserva lacuna própria, distinta do caso não aplicável à assinatura externa, que não inventa objetos do chamado. Modos ou vínculos desconhecidos impedem transmissão precisa, conservando fatos independentes nos termos de §7.1.
+
+O contrato semântico disponível de `invoke k` consiste nesses fatos de assinatura, `effectBound`, `outcomes`, operandos e premissas de `Publication.premises` com sujeitos e sites aplicáveis. Cada fato conserva origem/evidência e lacunas próprias. `ContractRef`, definido em [01, §9](01-modelo-e-identidades.md#9-fechamento-e-revisões), identifica a autoridade/versão/evidência desses fatos; não os substitui. Não há segunda cópia de efeitos em um inventário top-level com precedência a escolher. Evidência compartilhada por várias chamadas não amplia escopo de premissas nem confunde ocorrências, parâmetros ou ativações.
+
+Efeitos referem armazenamento e locais do chamador/compartilhado já identificados nesta publicação; limites por outcome usam as alternativas de §7.3. Um limite geral vale para outcomes sem limite específico, inclusive o restante aberto. Limites específicos têm chaves únicas; não se escolhe por ordem de lista. Nenhum limite pode excluir comportamento sustentado pelo corpo ou pela autoridade. Locais conhecidos usados apenas pelo limite continuam operandos identificados da interação, sem tornar a sua menção uma leitura de conteúdo. Escritas de resultados normais são adicionais aos limites do corpo.
+
+Relações contratuais de domínio são premissas `sameDomain` materializadas; não há inferência pela igualdade de `ContractRef`. Uma relação especializada de **valor**, interpretação de nome ou codec não ganha significado por citar uma autoridade: exige operações existentes ou manifesto de extensão com semântica, fallback e capacidade negociados. Este núcleo não cria uma linguagem de resumos calculados.
+
+Ausência de autoridade usa `unknown(u)` com `CONTRACT_UNKNOWN`; assinatura indisponível conserva inventários abertos com razões, efeitos não delimitados usam o maior escopo visível e outcomes incluem tudo que não foi excluído. Um contrato conhecido pode ser parcial; uma referência conhecida não fecha seus restantes. Contradição conhecida é `INVALID_IR`, não desconhecimento. Nenhum consumidor completa o conteúdo por callback, URL, catálogo ou consulta ao produtor.
+
 ## 8. Saídas
 
 ```text
@@ -143,6 +158,8 @@ halt(kind: normal | abnormal)
 ```
 
 `return` retorna da ativação da unidade corrente ao invocador, após avaliar os valores. Em entrada raiz, termina essa invocação raiz normalmente. A assinatura precisa ser compatível.
+
+Não existe seletor `return.entryScope`. O retorno obedece à entrada da ativação corrente, inclusive quando várias entradas compartilham a operação. A garantia do produtor deve cobrir essas execuções; uma lista escolhida por um validador não pode excluir outra entrada nem mudar o controle. Uma limitação em verificar essa compatibilidade é limite de validação, não campo semântico que selecione caminhos.
 
 `raise` encerra a ativação com saída excepcional. O destino vem da interação invocadora ou é uma saída excepcional raiz. `halt` termina a execução analisada; não equivale a retorno de subrotina. Nenhuma dessas operações possui fallthrough local.
 

@@ -44,6 +44,8 @@ Uma chamada externa sem contrato suficiente DEVE admitir os resultados não excl
 
 Uma lista vazia de alternativas só pode representar divergência se ela estiver explicitamente declarada como tal. A ausência de informação não é divergência comprovada.
 
+`InvocationOutcomes` não é o `ControlEnvelope` genérico. Possui no máximo um `normal`, uma alternativa por tag e um `any_exception`; `halt` e `diverge` são possibilidades independentes, e `open` conserva seu escopo. Destinos locais pertencem à unidade chamadora. Saída normal da unidade e salto ordinário não são retornos normais de uma interação; outros comportamentos possíveis de chamada ficam no restante de controle quando não delimitados pelo catálogo.
+
 ## 5. Retornos válidos
 
 Quando o consumidor analisa o corpo de uma entrada chamada, o retorno normal deve corresponder à invocação que iniciou aquela ativação. Retornar para a continuação de qualquer chamada com o mesmo target gera caminhos espúrios e não é precisão exata.

@@ -31,6 +31,15 @@ Cada linha estabelece um requisito de preservação. A ausência de uma informa�
 
 ## Critério de aceitação de nova capacidade
 
+O fechamento da edição especializa os requisitos existentes:
+
+| Requisito | Fato do produtor e representação | Observação do consumidor | Ausência/contracaso | Oráculos |
+| --- | --- | --- | --- | --- |
+| B-01/B-07/B-22 — Contrato fechado | Assinatura por entrada/site, `ContractRef` com autoridade/versão/evidência, efeitos/outcomes/premissas materializados | Interpretar a chamada e seus sujeitos sem serviço externo ou IDs de Java | Restantes e `CONTRACT_UNKNOWN`; posição inexistente é inválida | O-86, O-91 |
+| B-08/B-14 — Separação entre bases | Premissa universal `disjoint_storage` com evidência; intervalos da mesma base usam fatos já existentes | Determinar se um efeito limitado pode alcançar outro local | Sem garantia não presumir independência por IDs; associação aberta permanece aberta | O-14, O-15, O-88 |
+| B-17/B-18 — Identidade de recurso | Target interno/literal/calculado e relações com identidade própria | Observar nome e site sem resolução fictícia de catálogo | `ResourceId` não substitui target; literal não prova existência | O-24, O-65, O-87 |
+| B-12/B-19 — Precondições e fallback | Operação e garantia semântica ou envelope; certificado de Validator é evidência separada | Consumir fatos definidos e registrar limites, sem interpretar tokens de testes | Sem precondição, abstração; extensão não negociada é incompatível | O-89, O-90 |
+
 Uma capacidade proposta DEVE acrescentar ou especializar uma linha dessa matriz e fornecer exemplo positivo, contracaso, comportamento incompleto e impacto em compatibilidade. Se o produtor não consegue fornecer o requisito preciso, deve ser demonstrado que o fallback é conservador. Se o consumidor não precisa da informação, sua inclusão no núcleo deve ser reconsiderada.
 
 A matriz não congela um frontend ou algoritmo. Congela as obrigações observáveis que tornam a fronteira suficiente. Uma alteração de representação é aceitável quando essas obrigações e a política de compatibilidade permanecem satisfeitas.
