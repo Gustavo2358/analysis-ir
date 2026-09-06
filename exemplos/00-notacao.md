@@ -6,7 +6,7 @@
 
 Os blocos `air` ilustram a sintaxe abstrata da especificação. Não definem um formato de intercâmbio, parser, linguagem de implementação ou API. Todos os seus elementos têm significado nos documentos normativos. A notação omite repetição de metadados, não fatos semânticos necessários aos resultados esperados.
 
-Cada cenário X-01 a X-36 é uma publicação independente. Variantes dentro do mesmo cenário são explicitamente independentes quando indicado. As consultas escritas após os blocos são resultados de consumers, **não conteúdo da IR**.
+Cada cenário X-01 a X-39 é uma publicação independente. Variantes dentro do mesmo cenário são explicitamente independentes quando indicado. As consultas escritas após os blocos são resultados de consumers, **não conteúdo da IR**.
 
 ## 2. Identificadores e abreviações
 
@@ -24,6 +24,7 @@ Cada cenário X-01 a X-36 é uma publicação independente. Variantes dentro do 
 | `unknown(R)` | Valor desconhecido com `R: TypeRef`, sem escritas/controle oculto |
 | `known(T)` | Domínio de valor estabelecido; `T` isolado abrevia essa forma em posição de `TypeRef` |
 | `unknown_type(u)` | Domínio não estabelecido, referindo a lacuna `TYPE_UNKNOWN` de identidade `u` |
+| `premise p: sameDomain(a,b)` | Premissa tipada de domínio comum, com sujeitos, autoridade, origem e escopo explícitos; não iguala valores |
 | `before(k)` | Ponto imediatamente antes da operação `k` |
 | `RD(@x,before(k))` | Consulta derivada de definições alcançáveis |
 | `PV(@x,before(k))` | Consulta derivada de valores possíveis |
@@ -69,7 +70,7 @@ O cenário assume que a forma de interação exclui saltos arbitrários para o i
 
 `normal ^next` substitui apenas a continuação normal. `effects=none [C-PURE]` identifica contrato explícito de ausência de efeitos no armazenamento do chamador/compartilhado; não é default. `effects=may_write(@x)` restringe escritas a x, declara outras escritas vazias e mantém somente as leituras explicitadas ou dos operandos. Um contrato restritivo é premissa do cenário, não conclusão de análise.
 
-Para outras categorias, o namespace é `example.<categoria>` e a ação deve ser indicada. A notação `results=[@x]` usa assinatura externa de mesmo domínio conhecido de x; seus resultados só são escritos no retorno normal. Cenários com `unknown_type` DEVEM explicitar a assinatura parcial e o contrato conservador, sem herdar uma compatibilidade presumida dessa abreviação.
+Para outras categorias, o namespace é `example.<categoria>` e a ação deve ser indicada. A notação `results=[@x]` usa assinatura externa de mesmo domínio conhecido de x; seus resultados só são escritos no retorno normal. Cenários com `unknown_type` DEVEM explicitar a assinatura e as provas de `sameDomain` para transmissão precisa, ou o contrato conservador quando faltarem, sem herdar compatibilidade presumida dessa abreviação.
 
 ## 6. Como interpretar os resultados
 

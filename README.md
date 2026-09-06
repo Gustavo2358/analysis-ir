@@ -8,6 +8,8 @@
 
 Esta edição corrige a lacuna de tipos desconhecidos da 1.0.0: `TypeRef` distingue `known(T)` de `unknown_type(u)`, preservando entidades e leituras sem liberar operações que exigem domínio conhecido. `opaque_type` continua identificando domínio de extensão. A mudança exige versão major e perfis `@2`, conforme a [decisão de compatibilidade e migração](especificacao/09-extensibilidade-e-compatibilidade.md#51-correção-de-conhecimento-de-tipo--200).
 
+O conhecimento relacional é independente: `sameDomain(a,b)` pode comprovar um domínio comum ainda não identificado, por identidade, alias exato ou premissa/contrato explícito. Essa prova permite preservar cópias e transmissões de valor sem conversão, mas não fornece aritmética, concatenação ou outras operações que interpretam o domínio. Os oráculos distinguem obrigações estruturais e escalares por identificadores próprios.
+
 ## Propósito
 
 Analysis IR estabelece um contrato independente de linguagem entre produtores de conhecimento semântico e consumidores de análise. O contrato permite construir grafos de fluxo de controle, interpretar efeitos de memória, calcular definições alcançáveis e valores possíveis e identificar dependências com evidência e incompletude explícitas.

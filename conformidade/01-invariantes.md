@@ -17,7 +17,7 @@ Uma verificação estrutural bem-sucedida não certifica automaticamente os inva
 | I-05 | Estrutural | Cada entrada de corpo disponível aponta para label existente na unidade. |
 | I-06 | Semântico | Ordem de sequências não implica execução; ordem de operações na sequência é preservada. |
 | I-07 | Estrutural | Um label identifica início de sequência, não uma posição intermediária oculta. |
-| I-08 | Estrutural | `TypeRef` e cardinalidades dos operandos satisfazem as precondições da assinatura. Uma exigência de domínio concreto `T` requer `known(T)`; `unknown_type` não a satisfaz nem dispensa validação. Posições/assinaturas parciais seguem o contrato conservador explícito de `invoke`. |
+| I-08 | Estrutural | `TypeRef`, provas de domínio e cardinalidades satisfazem as precondições da assinatura. Uma exigência de domínio concreto `T` requer `known(T)`; cópia/transmissão exige `sameDomain` comprovado, sem necessariamente identificar `T`. `unknown_type` sozinho não satisfaz nenhuma dessas provas. Posições/assinaturas parciais seguem o contrato explícito de `invoke`. |
 | I-09 | Semântico | Expressão pura não oculta escrita, invocação, transferência ou saída excepcional. |
 | I-10 | Semântico | Avaliação e captura antecedem a escrita/efeito correspondente. |
 | I-11 | Estrutural | Cada ocorrência de operando é distinguível do objeto e dos demais usos. |
@@ -61,6 +61,9 @@ Uma verificação estrutural bem-sucedida não certifica automaticamente os inva
 | I-49 | Estrutural | Cada conhecimento de domínio é `known(T)` ou `unknown_type(u)`; `u` fecha sobre lacuna `TYPE_UNKNOWN`. Objetos/células/aliases exatos compartilham seu `TypeRef`; locais, expressões, ocorrências e assinaturas seguem as regras de obtenção/preservação. |
 | I-50 | Semântico | Tipo, valor, storage, binding e falta de suporte a extensão são fatos distintos. `opaque_type` identifica domínio conhecido; desconhecimento não fabrica domínio, compatibilidade, conversão, disjunção ou igualdade. Compartilhar `UncertaintyId` não prova igualdade de domínios/valores. |
 | I-51 | Estrutural | `choice` só declara `known(T)` com o mesmo domínio assegurado em todos os candidatos e no restante; caso contrário usa `unknown_type`, conservando os tipos próprios dos candidatos. Escolha vazia fechada não é válida para leitura/escrita. |
+| I-52 | Estrutural | Uma prova de `sameDomain` tem derivação finita nas regras normativas, sujeitos/referências fechados e escopo aplicável; premissas tipadas têm identidade, autoridade e origem. A operação não prova sua própria precondição. Cadeia contraditória entre domínios concretos distintos é inválida. |
+| I-53 | Semântico | Premissas de mesmo domínio são sustentadas pela autoridade declarada e valem somente em seu escopo. Não afirmam igualdade de valores, alias, codec ou conversão; não dispensam precondição de domínio concreto. |
+| I-54 | Derivado | Cópia/transmissão válida por `sameDomain` conserva a relação de captura e as evidências do valor no ponto anterior, mesmo com tipo concreto desconhecido; não vira escrita arbitrária apenas pela lacuna. |
 
 ## 2. Tratamento de falhas
 

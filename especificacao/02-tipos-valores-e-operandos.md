@@ -37,11 +37,35 @@ Nas assinaturas deste conjunto, `T: Type` sempre designa domínio conhecido; `R:
 
 ### 1.2 Precondições de domínio
 
-Uma exigência de domínio `T` só é satisfeita por `known(T)`. Exigir o mesmo tipo significa exigir o mesmo domínio conhecido, inclusive identificador, versão e parâmetros do tipo de extensão. `unknown_type` NÃO satisfaz essa exigência, mesmo quando os dois operandos compartilham a mesma lacuna. Não há coerção, compatibilidade universal ou inferência de tipo a partir do operador pretendido.
+Uma exigência de domínio concreto `T` só é satisfeita por `known(T)`, inclusive identificador, versão e parâmetros do tipo de extensão. `unknown_type` NÃO satisfaz essa exigência, mesmo quando os dois operandos compartilham a mesma lacuna. Exigir apenas igualdade de domínios é uma precondição diferente, expressa por `sameDomain` conforme §1.3. Não há coerção, compatibilidade universal ou inferência de tipo a partir do operador pretendido.
 
 Assim, desconhecimento do valor com `known(int)` permite `add`; desconhecimento do tipo não permite `add`, `concat`, `not`, comparações, conversões ou outros operadores que exigem domínio conhecido. `eq` e `ne` sobre um tipo de extensão exigem também que a igualdade esteja definida por seu contrato. Identificar `opaque_type` não fornece essa operação implicitamente.
 
-Sem conhecer o domínio, continuam admissíveis `read`, dependências de `unknown`, operandos de `opaque` e efeitos de `havoc`, respeitadas suas demais precondições. Nenhuma dessas formas interpreta o valor como inteiro, texto ou booleano. Uma construção observada que não satisfaça uma assinatura precisa DEVE conservar operandos, efeitos e incertezas por abstração apropriada; publicar a operação precisa com precondição violada é IR inválida.
+Sem identificar o domínio concreto, continuam admissíveis `read`, dependências de `unknown`, operandos de `opaque` e efeitos de `havoc`, respeitadas suas demais precondições. Cópia por `assign` e transmissão de parâmetros/resultados também são admissíveis quando `sameDomain` estiver comprovado. Nenhuma dessas formas interpreta o valor como inteiro, texto ou booleano. Uma construção observada que não satisfaça sua precondição DEVE conservar operandos, efeitos e incertezas por abstração apropriada; publicar a operação com precondição violada é IR inválida.
+
+### 1.3 Igualdade de domínios sem identificação concreta
+
+`sameDomain(a,b)` afirma que os valores denotados por `a` e `b` pertencem ao mesmo domínio semântico no escopo declarado, mesmo que a identidade concreta desse domínio não esteja disponível. A relação é entre sujeitos semânticos, NÃO entre grafias de `TypeRef` nem entre `UncertaintyId`. Não afirma igualdade de valores, alias, representação física, codec, tamanho, pureza ou ausência de conversão de uma construção observada.
+
+Um sujeito pode ser o domínio de um objeto/célula, de um local ou resultado de expressão identificado por sua ocorrência de operando, ou de uma posição de parâmetro/resultado identificada pela entrada ou contrato, direção e posição. Uma ocorrência inclui seu ponto de avaliação; relações entre assinatura e chamada identificam também o site e o vínculo de ativação pertinente. As referências DEVEM fechar sobre a publicação; não exigem novos IDs do frontend.
+
+A prova de `sameDomain` DEVE ter uma derivação finita a partir das regras abaixo:
+
+| Base ou regra | Condição |
+| --- | --- |
+| Domínios identificados | Ambos são `known(T)` para o mesmo `T` |
+| Identidade e armazenamento exato | Mesmo objeto de domínio estável, associação objeto–célula sem conversão ou alias exato da mesma vista, no contexto aplicável |
+| Leitura e captura | `read(p)` tem o domínio do local efetivamente lido; uma captura de valor conserva o domínio da ocorrência capturada |
+| Fato declarativo | Premissa tipada `sameDomain(a,b)` com `PremiseId`, sujeitos, escopo de validade, autoridade/motivo e origem; seu conteúdo DEVE estar materializado na publicação, inclusive quando vem de contrato |
+| Composição | Reflexividade para o mesmo sujeito/avaliação, simetria e transitividade, apenas na interseção dos escopos em que as bases valem |
+
+O produtor pode estabelecer a premissa a partir de sua entrada ou de contrato identificado, sem identificar o domínio concreto. Ela integra `premises`, não cria uma terceira variante de `TypeRef`. A derivação pode ser obtida dessas regras sem duplicar fatos; o consumidor DEVE conseguir explicar suas bases sem consultar o produtor. A existência da operação que requer a prova não pode ser usada circularmente como sua própria evidência. Premissas não podem ser fabricadas para tornar uma operação válida.
+
+Uma cadeia que iguale dois domínios concretos distintos é contraditória e constitui `INVALID_IR`; uma lacuna intermediária não reconcilia `known(int)` e `known(text)`. Prova ausente ou fora do escopo não estabelece a relação. Compartilhar lacuna, origem, nome ou região de bytes, ter apenas alias possível, ou reutilizar a representação de uma expressão dinâmica não basta. Em particular, duas avaliações independentes de uma escolha heterogênea podem selecionar domínios distintos.
+
+`sameDomain` conserva os `TypeRef` publicados e suas razões. Uma prova que relaciona um sujeito desconhecido a `known(T)` sustenta igualdade com esse domínio no escopo, mas NÃO converte o operando nem dispensa uma assinatura que exige explicitamente `known(T)`. Explicitar esse conhecimento em declarações/ocorrências exige respeitar o escopo e as regras de revisão e consistência da publicação; um consumidor não repara retroativamente operações inválidas.
+
+Mesmo comprovado entre sujeitos desconhecidos, `sameDomain` não fornece aritmética, concatenação, predicado ou igualdade de valores interpretável por `eq`. A igualdade de valores após uma cópia decorre da semântica de `assign`, não da premissa de domínio. As condições de memória/codec continuam independentes: mesmo domínio não prova que uma vista possa ser lida ou escrita com precisão.
 
 ## 2. Literais
 
@@ -100,7 +124,9 @@ region_slice(RegionId, offset, length, codec)          [memory.regions@1]
 
 `object(id)` obtém seu `TypeRef` do objeto; uma vista o obtém de seu domínio lógico e contrato de codec, conforme [03](03-memoria-e-aliases.md). `read(place)` conserva esse conhecimento, `ObjectId`/`StorageId` e alternativas conhecidos, identidade da ocorrência, leituras de endereço, proveniência do uso e da declaração e lacunas aplicáveis. Tipo desconhecido, por si só, não apaga a leitura nem abre um armazenamento já conhecido. As condições de validade de endereço, limites e pureza continuam obrigatórias.
 
-O `typeRef` de `choice` é `known(T)` somente quando todas as alternativas, inclusive todo restante possível, asseguram esse mesmo domínio. Se não houver um domínio comum estabelecido, usa `unknown_type(u)` e preserva os `TypeRef` próprios dos candidatos, inclusive domínios conhecidos distintos. Uma escolha fechada de candidatos todos `known(T)` conserva `known(T)`. A forma desconhecida não é um tipo união nem autoriza `assign` ou operadores de domínio conhecido. Leituras conservam as alternativas sem selecionar uma pela ordem. Uma incerteza nominal não deve ser normalizada para certeza apenas porque todas as alternativas têm a mesma grafia.
+O `typeRef` de `choice` é `known(T)` somente quando todas as alternativas, inclusive todo restante possível, asseguram esse mesmo domínio identificado. Se não houver um domínio concreto comum estabelecido, usa `unknown_type(u)` e preserva os `TypeRef` próprios dos candidatos, inclusive domínios conhecidos distintos. Uma escolha fechada de candidatos todos `known(T)` conserva `known(T)`. A forma desconhecida não é um tipo união nem autoriza operadores de domínio conhecido. Leituras conservam as alternativas sem selecionar uma pela ordem. Uma incerteza nominal não deve ser normalizada para certeza apenas porque todas as alternativas têm a mesma grafia.
+
+Para `assign` envolvendo uma escolha, `sameDomain` DEVE cobrir todas as combinações admissíveis entre origem e destino, inclusive o restante aberto. Uma prova para todos os candidatos e um limite declarativo de mesmo domínio para todo o restante são suficientes. Uma prova limitada a combinações correlacionadas só vale se a correlação também for fato explícito da publicação. A escolha pode assim ter domínio concreto desconhecido e ainda participar de uma cópia comprovada; a prova não seleciona um candidato nem converte atualização fraca em forte.
 
 `MemoryScope` é uma união tipada de objetos, regiões, células, armazenamento visível à unidade ou todo o armazenamento da publicação/ambiente. Toda referência aberta DEVE incluir o restante externo potencial quando ele não puder ser excluído. Escopo textual como “outros dados” sem significado de conjunto é insuficiente.
 

@@ -26,6 +26,8 @@ Se um fato exigido não estiver disponível, o produtor DEVE reduzir a alegaçã
 
 Tipo desconhecido não remove declaração, célula, leitura ou ocorrência conhecida. O produtor usa `unknown_type(u)` uniformemente e preserva fatos independentes. Não pode escolher `int`, `text`, `bool` ou `opaque_type` para satisfazer a assinatura desejada. Uma operação de domínio conhecido só é publicada se suas precondições forem satisfeitas; caso contrário, a construção e suas leituras/escritas conhecidas permanecem por abstração explícita.
 
+Quando conhece uma cópia sem conversão, o produtor DEVE preservar essa relação de valor por `assign` ou transmissão pertinente se puder demonstrar `sameDomain`, ainda que não identifique o domínio concreto. Pode publicar uma premissa tipada de mesmo domínio, com autoridade, sujeitos, origem e escopo; não pode inferi-la apenas da operação que pretende validar. Falta de prova de compatibilidade e falta de identidade concreta do domínio são lacunas diferentes. Uma premissa dependente de site/ativação não é generalizada a todas as chamadas.
+
 ## 3. O que o lowering faz
 
 O lowering converte fatos semanticamente estabelecidos em operações normalizadas. Pode decompor seleção, repetição, conversão ou atualização em operações mais simples, criar labels e objetos auxiliares, resolver continuações estruturais e copiar proveniência.

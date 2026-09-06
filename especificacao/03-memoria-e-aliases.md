@@ -20,6 +20,8 @@ Cada armazenamento conhecido tem duração `activation`, `persistent` ou `extern
 
 Uma `Cell` contém exatamente um valor de um domínio, cujo conhecimento é declarado por `TypeRef`. `unknown_type(u)` não transforma a célula em armazenamento de tipo dinâmico/universal; apenas deixa seu domínio não estabelecido. Seu tamanho em bytes não é definido. Uma associação `object → cell` permite análise escalar sem exigir representação física. Objeto e célula associados sem conversão compartilham o mesmo `TypeRef`; um alias exato também o conserva. Se o domínio estiver estabelecido nessa associação, todos conservam `known(T)`. Reutilizar uma lacuna entre células distintas não prova compatibilidade de seus domínios.
 
+Identidade de objeto/célula e alias exato da mesma vista sustentam `sameDomain` independentemente de identificar o domínio concreto. Assim, uma cópia de valor entre esses sujeitos não precisa perder sua relação de valor por `TYPE_UNKNOWN`. Sobreposição de bytes, alias possível ou identidade de região com vistas diferentes não fornecem essa prova. Escritas mudam conteúdo, não o domínio estável declarado da célula; nenhuma dessas regras presume codec ou conversão.
+
 Células com identidades distintas representam armazenamento independente **apenas quando essa separação foi estabelecida pelo produtor ou declarada como premissa rastreável**. O produtor NÃO DEVE criar células distintas para contornar um layout ou alias desconhecido. Dois objetos que nomeiam o mesmo armazenamento DEVEM compartilhar a célula, possuir relação de alias explícita ou permanecer abertos.
 
 Uma célula admite atualização completa atômica. Escrita parcial em célula sem decomposição não é precisa: deve ser representada em uma região, transformada em leitura-modificação-escrita com semântica comprovada ou abstraída conservadoramente.
@@ -85,7 +87,7 @@ Um `EntryState` é um inventário por entrada de condições iniciais de armazen
 
 Condições não fornecidas são abertas: para células novas, valor não inicializado/desconhecido; para estado persistente/externo, conteúdo preservado não determinado. Condições iniciais sobre aliases ou vistas sobrepostas DEVEM ser consistentes entre si. Dois literais incompatíveis para o mesmo byte/célula na mesma entrada constituem premissas contraditórias e não podem ser conciliados por ordem do inventário.
 
-`external_unknown` e `uninitialized` conservam o `TypeRef` do local; não fazem seu tipo virar desconhecido. Um literal inicial exige domínio conhecido compatível e não pode ser associado a `unknown_type` para contornar a validação. A inicialização precisa por parâmetro obedece às condições de transmissão da assinatura; falta de conhecimento conserva a condição/lacuna sem fabricar um valor ou um domínio.
+`external_unknown` e `uninitialized` conservam o `TypeRef` do local; não fazem seu tipo virar desconhecido. Um literal inicial conserva seu domínio conhecido e exige `sameDomain` com o local, além das condições de representação aplicáveis; uma anotação `unknown_type` sozinha não prova compatibilidade. A inicialização precisa por parâmetro obedece às condições de transmissão da assinatura, inclusive prova de mesmo domínio sem identificá-lo concretamente; falta de prova conserva a condição/lacuna sem fabricar um valor ou um domínio.
 
 `EntryState` descreve a entrada da ativação, não uma operação que se repete em cada visita ao label inicial por back-edge. Reentrar no label por transferência dentro da mesma ativação não reaplica seus seeds.
 

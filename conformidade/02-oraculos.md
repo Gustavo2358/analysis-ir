@@ -10,6 +10,44 @@ Quando se exige um conjunto exato, valem as premissas do cenário, o perfil prec
 
 Para invariância de identidade entre representações equivalentes, compara-se por uma correlação explícita de IDs, e não por igualdade de números locais.
 
+### Sub-requisitos por produto
+
+Um ID com sufixo, como `O-77-STRUCT` ou `O-77-SCALAR`, designa somente as assertivas nomeadas por ele. O cenário e os contracasos são os do oráculo-base; uma falha se aplica ao sub-requisito apenas quando contradiz suas assertivas. Referir o ID-base sem sufixo exige todos os sub-requisitos, quando houver. `STRUCT` verifica/preserva fatos publicados, integridade, contratos e controle explícito; não exige calcular valores nem efeitos escalares. Assertivas `INVALID_IR` pertencem ao papel `Validator`; o consumidor estrutural deve recusar alegação válida e conservar diagnóstico, sem reparar a publicação. `SCALAR` exige efeitos/capturas/valores escalares especificados; `REGION` exige a interpretação de memória por intervalos/codecs especificada. Cada implementação declara o produto a que sua evidência corresponde, conforme os perfis.
+
+As projeções estruturais dos oráculos anteriores são delimitadas abaixo. Elas reutilizam os cenários originais; suas assertivas substituem, para a referência com sufixo, qualquer obrigação de RD/PV do oráculo-base.
+
+| ID | Assertivas estruturais obrigatórias |
+| --- | --- |
+| O-01-STRUCT | Preservar a, b, k e sua ordem, destinos e operandos. |
+| O-02-STRUCT | Preservar os dois ramos e suas transferências à continuação comum. |
+| O-03-STRUCT | Preservar o caminho falso direto à continuação, sem fabricar escrita nesse caminho. |
+| O-04-STRUCT | Preservar `halt` sem successor e os demais destinos explícitos. |
+| O-05-STRUCT | Preservar todos os casos/default; rejeitar casos duplicados por igualdade dos literais. |
+| O-06-STRUCT | Preservar teste, saída e back-edge, inclusive caminho de zero iterações. |
+| O-07-STRUCT | Preservar entrada pelo corpo, teste e back-edge, sem caminho direto da entrada à saída. |
+| O-08-STRUCT | Preservar operação de captura, ocorrência `read(@source)` e ponto anterior a ela; não exige calcular A. |
+| O-09-STRUCT | Permutar sequências preserva ordem intrassequência, referências e transferências. |
+| O-10-STRUCT | Dividir sequência com jump preserva operações, pontos correlacionados e fluxo explícito. |
+| O-18-STRUCT | `return` sai da ativação sem fallthrough à sequência seguinte. |
+| O-19-STRUCT | `halt` não alcança a continuação normal do invocador como retorno. |
+| O-20-STRUCT | Preservar lista de resultados vinculada apenas ao outcome normal; não exige calcular conteúdo de status. |
+| O-21-STRUCT | Preservar `any_exception` e restantes de controle não excluídos. |
+| O-22-STRUCT | Preservar continuação única e envelope de escrita aberto como fatos independentes; não calcula seus efeitos em valores. |
+| O-29-STRUCT | Identidades e referências permanecem separadas por unidade/namespace. |
+| O-30-STRUCT | Referência interna inexistente produz `INVALID_IR` com domínio/identidade; não vira recurso externo implícito. |
+| O-31-STRUCT | Recusar composição de revisões sem correlação/compatibilidade explícita. |
+| O-32-STRUCT | Distinguir inventário zero completo de inventário indisponível. |
+| O-33-STRUCT | Preservar a construção e seus envelopes entre as operações conhecidas. |
+| O-34-STRUCT | Preservar fronteira aberta que admite todo `ControlScope`, sem fechar o fluxo no successor aparente. |
+| O-41-STRUCT | Preservar origens e regras de derivação, sem spans fabricados. |
+| O-42-STRUCT | Operações distintas mantêm IDs distintos apesar da origem comum. |
+| O-43-STRUCT | Distinguir origem da declaração e origem da ocorrência de uso. |
+| O-44-STRUCT | Alterar texto de exibição não muda identidades, referências, operações, contratos ou controle. |
+| O-45-STRUCT | Preservar site literal e inventário parcial; não afirmar exclusividade global de dependências. |
+| O-46-STRUCT | Preservar site no inventário e distinguir presença de alcançabilidade no controle fechado do cenário. |
+| O-47-STRUCT | Conservar operação/envelope e modo de consumo; escolher uma representação executável sem duplicar original/fallback. |
+| O-48-STRUCT | Registrar incompatibilidade quando capacidade requerida não possui interpretação nem envelope compatível. |
+
 ## O-01 — Sobrescrita linear
 
 **Cenário:** X-01.
@@ -558,7 +596,11 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 
 **Cenário:** X-31, objeto `@name` com `known(text)` e atribuição de literal textual.
 
-**Resultado obrigatório:** Objeto, célula, `object(@name)`, `read` e ocorrência de leitura conservam `known(text)`. A atribuição satisfaz I-08; o literal A é sustentado após a escrita.
+**Resultado obrigatório:**
+
+**O-69-STRUCT:** Objeto, célula, `object(@name)`, `read` e ocorrência conservam `known(text)`; a atribuição satisfaz I-08.
+
+**O-69-SCALAR:** Após a escrita, o literal A é sustentado como valor corrente de `@name`.
 
 **Falha a detectar:** Perder o domínio ao propagá-lo entre declaração, local e operando, ou exigir frontend para identificá-lo.
 
@@ -566,7 +608,11 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 
 **Cenário:** X-31, objeto `@token` com `known(opaque_type(example.token,1))`, inclusive consumidor sem interpretação interna do domínio. Variante: cópia entre duas células desse mesmo domínio sob contrato de consumo conservador; contracaso: `concat(read(@token),text("A"))`.
 
-**Resultado obrigatório:** O domínio e a versão permanecem identificados; `havoc`, leitura e cópia de valor entre células compatíveis preservam esse domínio. A concatenação é `INVALID_IR`. Operações precisas de extensão exigem contrato/capacidade; ausência de suporte não vira `TYPE_UNKNOWN`.
+**Resultado obrigatório:**
+
+**O-70-STRUCT:** O domínio e a versão permanecem identificados em locais/operandos; a cópia tem prova de domínio comum e a concatenação é `INVALID_IR`. Preservar contrato/capacidade e modo de consumo; falta de suporte não vira `TYPE_UNKNOWN`.
+
+**O-70-SCALAR:** Interpretar leitura, escrita de `havoc` e captura da cópia de valor sem interpretar a estrutura interna de tokens; `havoc` abre conteúdo, a cópia conserva o valor capturado e nenhum deles troca o domínio.
 
 **Falha a detectar:** Tratar domínio opaco como tipo ausente, aceitar texto implicitamente, inventar igualdade não definida ou usar `opaque_type("unknown",1)` para uma lacuna de domínio.
 
@@ -574,7 +620,9 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 
 **Cenário:** X-31, objeto `@untyped` com `unknown_type(u)` e célula identificada. Variantes negativas: remover a lacuna `u` ou alterar seu código para um que não seja `TYPE_UNKNOWN`.
 
-**Resultado obrigatório:** O objeto e a célula permanecem presentes com origem e associação conhecidas; tipo desconhecido não implica storage/binding desconhecidos. As variantes negativas são `INVALID_IR` por I-02/I-49.
+**Resultado obrigatório:**
+
+**O-71-STRUCT:** O objeto e a célula permanecem presentes com origem e associação conhecidas; tipo desconhecido não implica storage/binding desconhecidos. As variantes negativas são `INVALID_IR` por I-02/I-49. Este oráculo não acrescenta assertiva escalar.
 
 **Falha a detectar:** Apagar declaração, fabricar célula por causa do tipo, perder a lacuna ou aceitar referência de tipo sem significado.
 
@@ -582,7 +630,11 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 
 **Cenário:** X-32. Variante metamórfica: duas ocorrências de `read(@x)` em `knownOperands`, cada uma referenciada no envelope.
 
-**Resultado obrigatório:** Conservam-se `ObjectId`, `StorageId`, `TypeRef`, lacuna de tipo, razões aplicáveis ao conteúdo, origem da declaração e origem/identidade de cada ocorrência. A operação tem as leituras conhecidas e continuação declarada, sem escrita. Referir uma ocorrência no envelope não duplica o evento; duas ocorrências distintas não são fundidas.
+**Resultado obrigatório:**
+
+**O-72-STRUCT:** Conservar `ObjectId`, `StorageId`, `TypeRef`, lacunas/razões e origens da declaração e de cada ocorrência, além do envelope sem escrita e da continuação declarada. Referir uma ocorrência no envelope não duplica seu ID; duas ocorrências distintas não são fundidas.
+
+**O-72-SCALAR:** Os efeitos contêm as leituras declaradas, cada ocorrência contada uma vez, e nenhuma escrita; a falta de tipo não apaga a leitura nem altera o estado.
 
 **Falha a detectar:** Substituir por `nop`, apagar a leitura, inventar escrita/recurso ou perder a distinção entre uso e declaração.
 
@@ -590,7 +642,11 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 
 **Cenário:** X-34, `add(read(@x),int(1))`; variantes `neg(read(@x))` e ambos argumentos de tipo desconhecido com a mesma lacuna.
 
-**Resultado obrigatório:** `INVALID_IR` por I-08. O domínio não é inferido do operador, do outro argumento ou do ID da lacuna. `add(unknown(known(int)),int(1))` é válido e mantém resultado de domínio `int` não determinado.
+**Resultado obrigatório:**
+
+**O-73-STRUCT:** Os contracasos são `INVALID_IR` por I-08, inclusive com prova de `sameDomain` entre argumentos desconhecidos. Não inferir domínio do operador, outro argumento ou lacuna. `add(unknown(known(int)),int(1))` é válido com resultado `known(int)`.
+
+**O-73-SCALAR:** No caso válido, o resultado numérico permanece não determinado, com restante de valor aberto, sem fabricar literal.
 
 **Falha a detectar:** Interpretar “tipo desconhecido” como dispensa de validação, assumir inteiro ou considerar as variantes positivas como tipo desconhecido.
 
@@ -598,7 +654,11 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 
 **Cenário:** X-34, `concat(read(@x),text("A"))`, `not(read(@x))` e variante `branch read(@x)`.
 
-**Resultado obrigatório:** Cada contracaso é `INVALID_IR` por I-08. A variante booleana de X-33 é válida porque seu resultado é explicitamente `known(bool)` e tem pureza estabelecida; conserva a dependência de tipo desconhecido e ambos os destinos.
+**Resultado obrigatório:**
+
+**O-74-STRUCT:** Cada contracaso é `INVALID_IR` por I-08 mesmo com `sameDomain` entre argumentos. A variante booleana de X-33 é válida por `known(bool)` e pureza estabelecidos; conserva a ocorrência da dependência de tipo desconhecido e ambos os destinos.
+
+**O-74-SCALAR:** A variante válida lê a dependência, não escreve memória e admite os dois valores booleanos, sem converter o domínio da dependência.
 
 **Falha a detectar:** Assumir `text`/`bool`, converter silenciosamente a dependência ou confundir desconhecimento do predicado com desconhecimento de seu tipo.
 
@@ -606,7 +666,11 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 
 **Cenário:** X-33, `p = unknown(known(text),[],none,v)`; variante de atribuição a célula `known(text)` em X-34.
 
-**Resultado obrigatório:** O domínio é `text`, o valor não é determinado e a razão de valor permanece. A atribuição é válida. Avaliações distintas não têm igualdade garantida. Não é necessário criar lacuna `TYPE_UNKNOWN`.
+**Resultado obrigatório:**
+
+**O-75-STRUCT:** Conservar `known(text)`, expressão `unknown` e razão de valor; validar a atribuição sem criar lacuna `TYPE_UNKNOWN`.
+
+**O-75-SCALAR:** Valor não determinado com restante textual aberto; avaliações distintas não têm igualdade garantida. A atribuição captura sua avaliação e sobrescreve o destino conforme a memória.
 
 **Falha a detectar:** Transformar `unknown` em literal, apagar a expressão, abrir o domínio sem motivo ou rejeitar uma operação apenas pelo valor desconhecido.
 
@@ -614,31 +678,47 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 
 **Cenário:** X-33, `q = unknown(unknown_type(u),[read(@x)],none,v)`.
 
-**Resultado obrigatório:** As lacunas de tipo e valor são distinguíveis; a dependência, sua ocorrência e sua origem permanecem. `remainingReads=none` fecha a lista de leituras, não o domínio ou o conjunto de valores. Não se cria igualdade entre domínio/valor do resultado e da dependência.
+**Resultado obrigatório:**
+
+**O-76-STRUCT:** Distinguir lacunas de tipo/valor e preservar dependência, ocorrência, origem e `remainingReads=none`. Não derivar `sameDomain` do ID compartilhado.
+
+**O-76-SCALAR:** Preservar a leitura conhecida sem outras leituras; o valor/domínio não ficam fechados por `remainingReads=none`. Não igualar valores de resultado/dependência nem apresentar conjunto vazio fechado em ponto alcançável.
 
 **Falha a detectar:** Substituir a referência de tipo pela razão de valor, perder dependências, inventar um domínio padrão ou interpretar ausência de candidatos como conjunto vazio fechado em ponto alcançável.
 
 ## O-77 — Assign exige compatibilidade; abstração preserva a leitura
 
-**Cenário:** X-34, tentativas de `assign` com tipo desconhecido em um ou nos dois lados; variante `assign(@x,read(@x))`; abstração `transfer` com envelope explícito.
+**Cenário:** X-34, tentativas sem prova de mesmo domínio entre células distintas; `assign(@x,read(@x))`; alias exato e cópia com premissa de X-37; abstração `transfer` de X-34.
 
-**Resultado obrigatório:** As atribuições precisas são `INVALID_IR` por I-08, mesmo com o mesmo objeto/ID de lacuna. A abstração é válida e mantém leitura da origem, ocorrência de escrita e sobrescrita completa comprovada do destino. Não afirma cópia tipada exata. `assign` entre domínios conhecidos diferentes também continua inválido.
+**Resultado obrigatório:**
 
-**Falha a detectar:** Criar compatibilidade universal/implícita, inferir tipo por igualdade de lacunas ou substituir a abstração apenas por `havoc` apagando a leitura.
+**O-77-STRUCT:** Autoatribuição, alias exato e cópia com premissa aplicável satisfazem I-08 por `sameDomain` sem tipo concreto. Cópia entre sujeitos distintos sem prova, mesmo compartilhando lacuna, é `INVALID_IR`, assim como domínios concretos contraditórios. A abstração conserva operandos, envelope e origens; nenhum `assign` válido é substituído apenas por falta de tipo concreto.
+
+**O-77-SCALAR:** `assign` válido conserva leitura anterior, evento de definição e valor capturado, inclusive na autoatribuição. Na cópia de X-37, alterar `@x` depois de `capture` não altera o valor capturado em `@y`. `transfer` de X-34, sem semântica de cópia estabelecida, conserva leitura e sobrescrita com conteúdo aberto, sem inventar identidade de valores.
+
+**Falha a detectar:** Rejeitar cópia comprovada por falta de tipo concreto, criar compatibilidade por igualdade de lacunas, substituir cópia por escrita arbitrária ou apagar a leitura da abstração.
 
 ## O-78 — Choice e binding preservam tipos próprios
 
 **Cenário:** X-35. Variantes: escolha fechada só de locais `known(text)`; escolha vazia fechada; candidato com tipo desconhecido; binding físico `unknown(scope,reason)` em objeto de tipo `known(text)`.
 
-**Resultado obrigatório:** A escolha homogênea fechada conserva `known(text)`; as heterogêneas ou sem garantia para o restante usam `unknown_type` preservando candidatos e seus domínios. `known(text)` sem essa garantia viola I-51; escolha vazia fechada é inválida para leitura/escrita. Binding físico desconhecido conserva `known(text)` do objeto.
+**Resultado obrigatório:**
+
+**O-78-STRUCT:** Escolha homogênea fechada conserva `known(text)`; heterogêneas ou sem garantia para o restante usam `unknown_type` preservando candidatos/domínios. `known(text)` sem garantia viola I-51; escolha vazia fechada é inválida para leitura/escrita. Binding físico desconhecido conserva `known(text)` do objeto.
+
+**O-78-SCALAR:** A leitura admite todos os candidatos e o restante quando presente; a falta de tipo não seleciona candidato, apaga leitura nem fecha binding físico aberto.
 
 **Falha a detectar:** Escolher o primeiro candidato, tratar desconhecimento como conversão/união de tipos, perder tipos conhecidos ou misturar lacuna nominal/física com lacuna de domínio.
 
 ## O-79 — Assinaturas parciais e precondições concretas
 
-**Cenário:** X-36 e seus contracasos. Variante positiva: parâmetro, argumento e resultado de mesmo domínio conhecido.
+**Cenário:** X-36 sem prova de transmissão precisa e seus contracasos; variantes positivas com domínio conhecido comum ou provas de X-38.
 
-**Resultado obrigatório:** A chamada parcial conserva posições, modos, `TypeRef`, leituras, alvo e outcomes conhecidos, sem alegar transmissão tipada precisa. Resultado desconhecido é escrito só no retorno normal. Argumento de tipo desconhecido para parâmetro `known(int)` e `return` de tipo desconhecido para resultado `known(text)` violam I-08; domínios conhecidos compatíveis satisfazem a transmissão precisa. Lacuna de tipo de uma posição não apaga aridade nem torna assinatura desconhecida uma assinatura vazia.
+**Resultado obrigatório:**
+
+**O-79-STRUCT:** Preservar posições, modos, `TypeRef`, ocorrências, target e outcomes. Sem `sameDomain`, X-36 não alega transmissão precisa; com prova aplicável, X-38 é válido. Transmissão precisa sem prova para parâmetro/resultado, inclusive para `known(int)`/`known(text)`, viola I-08. Tipo de posição desconhecido não apaga aridade nem torna assinatura vazia.
+
+**O-79-SCALAR:** Resultado normal é escrito somente nesse outcome. A chamada conservadora de X-36 produz conteúdo aberto; a transmissão de X-38 conserva o valor capturado e devolvido pelo corpo. Prova apenas de mesmo domínio não afirma que todo resultado copie o argumento.
 
 **Falha a detectar:** Aceitar precondição concreta sem prova, tratar posição desconhecida como polimorfismo, fabricar argumento/resultado ou aplicar resultado normal na exceção.
 
@@ -646,7 +726,11 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 
 **Cenário:** Célula exata `@x : unknown_type(u)` com conteúdo de entrada desconhecido; executar `havoc.must @x`. Variante independente: `havoc.may {@x}`. Demais locais são comprovadamente disjuntos.
 
-**Resultado obrigatório:** Ambas preservam `unknown_type(u)` e a razão de escrita. A primeira sobrescreve obrigatoriamente a célula; a segunda admite ausência de escrita. A lacuna de tipo não muda extensão, identidade ou independência já estabelecidas nem contamina locais disjuntos.
+**Resultado obrigatório:**
+
+**O-80-STRUCT:** Preservar espécie `havoc.must`/`havoc.may`, destino/escopo, `unknown_type(u)`, razão de escrita, identidade e fatos de independência.
+
+**O-80-SCALAR:** `must` sobrescreve obrigatoriamente a célula; `may` admite ausência de escrita. Nenhum muda domínio/extensão nem contamina local comprovadamente disjunto apenas por falta de tipo.
 
 **Falha a detectar:** Escolher domínio novo, converter o conteúdo, apagar escrita comprovada ou abrir todos os efeitos apenas por desconhecer o tipo.
 
@@ -654,6 +738,46 @@ Para invariância de identidade entre representações equivalentes, compara-se 
 
 **Cenário:** Três variantes com mesmo intervalo físico válido e conhecido: vista com `text.ascii@1`; vista de domínio `known(text)` mas codec não interpretado; vista cujo domínio lógico e interpretação não são estabelecidos, com `unknown_type(u)`. Nas variantes incompletas, o cenário garante leitura total sem efeitos excepcionais.
 
-**Resultado obrigatório:** A primeira tem `known(text)`; a segunda conserva `known(text)` e `CODEC_UNKNOWN`; a terceira conserva `unknown_type(u)` e lacuna de interpretação. Intervalo, bytes e leitura conhecidos não desaparecem. Cópia bruta continua possível sob as precondições de `copy_bytes`. Se totalidade não estiver assegurada, a leitura exige operação com envelope de erro/controle apropriado. `assign` preciso sem domínio/codificação aplicáveis não é autorizado.
+**Resultado obrigatório:**
+
+**O-81-STRUCT:** Conservar respectivamente `known(text)`; `known(text)` com `CODEC_UNKNOWN`; `unknown_type(u)` com lacuna de interpretação. Preservar intervalo e ocorrência de leitura. Rejeitar alegação de domínio desconhecido contraditória com o codec declarado que estabelece `text`.
+
+**O-81-REGION:** Preservar bytes/fatos físicos e cópia bruta sob as precondições de `copy_bytes`. Sem totalidade, a leitura exige envelope de erro/controle. `sameDomain` não autoriza escrita precisa sem codec/domínio de codificação aplicáveis.
 
 **Falha a detectar:** Fazer codec desconhecido implicar sempre tipo desconhecido, escolher ASCII implicitamente, alegar `unknown_type` apesar de codec que estabelece domínio conhecido ou apagar fatos físicos independentes.
+
+## O-82 — Provas de mesmo domínio são fatos com escopo
+
+**Cenário:** X-37. Variantes: premissa ausente; fora do escopo de `capture`; sujeito inexistente; cadeia circular sem base; cadeia ligando `known(int)` e `known(text)` por sujeito desconhecido; bases independentes combinadas por simetria/transitividade no escopo comum.
+
+**Resultado obrigatório:**
+
+**O-82-STRUCT:** Admitir as derivações finitas válidas por identidade, alias exato, leitura e premissa/combinação aplicável. Rejeitar referências quebradas, contradições e uso de prova ausente, circular ou fora do escopo. Preservar sujeitos, autoridade, origem e lacunas sem unificar `UncertaintyId`. As variantes inválidas violam I-08/I-52; `sameDomain` não satisfaz precondição concreta de `add`, `concat`, `not` ou `eq`.
+
+**O-82-SCALAR:** Cópias válidas conservam relação de captura; igualdade de domínio sem operação de cópia não iguala conteúdos de células distintas. Autoatribuição continua uma leitura e definição, sem virar desaparecimento de ocorrência.
+
+**Falha a detectar:** Usar a própria operação como prova, transformar lacuna em variável de unificação, promover tipo por conveniência ou perder cópia já comprovada.
+
+## O-83 — Provas em parâmetros, retornos e resultados
+
+**Cenário:** X-38 e suas variantes de `value`, `copy`, `reference`, segunda chamada e remoção de vínculos.
+
+**Resultado obrigatório:**
+
+**O-83-STRUCT:** Validar cada vínculo de domínio e seu escopo de chamada/ativação; preservar modos e origens. Tipo concreto desconhecido não impede transmissão precisa com prova. Remover uma prova impede a transmissão precisa correspondente. Prova de um site não autoriza outro; referência exige também associação de local/vista apropriada.
+
+**O-83-SCALAR:** O valor capturado chega ao parâmetro por `value`/`copy`; no corpo identidade do cenário, `return` o transmite ao resultado normal. Conteúdos de chamadas diferentes não são igualados por compartilhar assinatura/domínio. `reference` disponibiliza local sem afirmar cópia ou leitura de conteúdo pelo modo sozinho. Se o corpo devolver outro valor do mesmo domínio, esse valor rege o resultado.
+
+**Falha a detectar:** Trocar transmissão comprovada por resultado arbitrário, igualar argumentos/resultados só por tipo, reutilizar prova fora do escopo ou inferir efeito do modo de passagem.
+
+## O-84 — Cobertura de domínio em escolhas
+
+**Cenário:** X-39 e contracasos com prova só para um candidato, restante aberto sem garantia de domínio, avaliações independentes de escolha heterogênea e destino alternativo.
+
+**Resultado obrigatório:**
+
+**O-84-STRUCT:** A cópia exige prova que cubra todas as combinações admissíveis e o restante; com essa prova, é válida apesar de `unknown_type`. Prova parcial é insuficiente. Mesma representação de escolha heterogênea não prova domínio comum de duas avaliações. Preservar candidatos, suas ocorrências e escopos das premissas.
+
+**O-84-SCALAR:** Conservar as alternativas de valor da origem; na variante de destino alternativo, a escrita permanece fraca em cada candidato. A prova de domínio não seleciona local, elimina restante ou prova disjunção.
+
+**Falha a detectar:** Validar a partir do primeiro candidato, ignorar restante, confundir identidade de expressão com captura única ou promover escrita alternativa a obrigatória em todos os locais.

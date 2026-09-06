@@ -87,6 +87,8 @@ Para `unknown_type(u)`, o consumidor conserva a lacuna de domínio e não interp
 
 Conhecer o domínio de `opaque_type` sem interpretar a extensão mantém a identidade desse domínio e o modo de consumo negociado. Não deve ser relatado como domínio não identificado. Em todos os casos, leituras, ocorrências, aliases e origens conhecidos permanecem disponíveis, independentemente da precisão dos valores.
 
+Em `assign(y,read(x))` válido por `sameDomain`, a relação de cópia conserva o valor de `x` no estado anterior mesmo quando ambos os `TypeRef` são desconhecidos. Alterações posteriores de `x` não mudam o valor capturado. O consumidor DEVE manter essa dependência no ponto correto, os candidatos sustentados e o restante aplicável; não substitui a cópia por valor arbitrário apenas por não identificar o domínio. Isso não obriga a enumerar valores não conhecidos nem introduz uma exigência de análise relacional geral: exige respeitar a semântica de captura já declarada. Semântica de `sameDomain` sozinha não permite igualar valores de locais distintos.
+
 Conjunto vazio fechado em ponto alcançável só é válido se o domínio consultado realmente não admite valor; normalmente indica inconsistência. Ponto inalcançável possui estado próprio. Falta de inicialização e entrada externa geram valor desconhecido, não conjunto vazio fechado.
 
 ### 5.2 Transferência e reunião

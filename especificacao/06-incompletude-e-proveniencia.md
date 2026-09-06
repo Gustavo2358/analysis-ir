@@ -28,6 +28,8 @@ Nenhuma dimensão é elevada por outra. Um literal conhecido não resolve automa
 
 O conhecimento de domínio é representado por `TypeRef`, não por um novo estado global de precisão. `unknown_type` limita a interpretação de valores, mas não abre automaticamente storage, efeitos, controle ou dependências. Uma alegação local de leitura exata pode conservar domínio desconhecido; ela não alega valor ou tipo concreto conhecido.
 
+Uma lacuna de identidade concreta do domínio pode coexistir com `sameDomain` comprovado. A premissa de igualdade de domínios é conhecimento positivo com sujeitos, autoridade e escopo; não substitui `TYPE_UNKNOWN` nem é inferida da razão da lacuna. Tipo concreto desconhecido não obriga a perder uma relação de cópia estabelecida por `assign` ou transmissão sem conversão. Igualdade de domínio, isoladamente, não afirma igualdade de valores.
+
 Uma síntese global não deve ser mais forte que os fatos relevantes para o mesmo escopo e dimensão. `NOT_APPLICABLE` é excluído da combinação, não usado para esconder lacuna. Alegações locais podem ser melhores que a síntese global quando sua independência estiver demonstrada.
 
 ## 3. Envelopes conservadores

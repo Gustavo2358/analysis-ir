@@ -27,6 +27,7 @@ Cada linha estabelece um requisito de preservação. A ausência de uma informa�
 | B-19 — Extensão | Nova semântica tipada | Operação/capacidade com versão e envelopes | Consumo preciso ou fallback seguro | Incompatibilidade explícita | O-47, O-48 |
 | B-20 — Escala | Inventário completo e limites reais | Cardinalidade irrestrita, representação compacta | Consulta sob demanda e resultados honestos | `ANALYSIS_LIMIT` com restante | O-49, O-50, O-68 |
 | B-21 — Conhecimento de tipo | Domínio estabelecido ou lacuna localizada, entidades e usos conhecidos | `TypeRef` em objetos, células, locais, expressões, ocorrências e assinaturas | Distinguir tipo/valor desconhecidos de domínio de extensão; preservar usos sem inventar compatibilidade | `unknown_type`, leituras e envelopes; rejeição de precondição concreta não satisfeita | O-69 a O-81 |
+| B-22 — Domínio comum não identificado | Identidade/alias exato ou premissa de mesmo domínio com autoridade, sujeitos e escopo; semântica de cópia sem conversão | `sameDomain` independente de `TypeRef`, `assign` e transmissão com captura | Conservar a relação de valor no ponto anterior sem interpretar domínio ausente | Sem prova, abstração conserva reads/writes; lacuna compartilhada não prova igualdade | O-77, O-82 a O-84 |
 
 ## Critério de aceitação de nova capacidade
 
