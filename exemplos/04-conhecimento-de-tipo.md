@@ -141,7 +141,7 @@ uncertainty v: TYPE_UNKNOWN scope={@y} origin=example:X-37/destination-type
 cell @x : unknown_type(u)
 alias @alias : unknown_type(u) = @x
 cell @y : unknown_type(v)
-premise p: sameDomain(@x,@y) scope=activation(@main)
+premise p: sameDomain(@x,@y) scope=operation(capture)
            authority=example:X-37/input origin=example:X-37/domain-evidence
 entry @main -> ^entry state={@x:external_unknown,@y:external_unknown}
 ^entry:
@@ -159,20 +159,20 @@ entry @main -> ^entry state={@x:external_unknown,@y:external_unknown}
 
 `self` é válido por identidade; `exact_alias`, pela associação exata; `capture`, por `p` e pela regra de domínio de `read`. As três operações conservam suas ocorrências e definições. Os `TypeRef` continuam desconhecidos. No comportamento em que a entrada fornece um valor `v₀`, `@y` após `capture` contém exatamente esse valor; a escrita posterior em `@x` não altera a captura. `v₀` é uma variável da explicação, não literal ou campo de IR. O consumidor não precisa enumerá-lo, mas conserva a relação com a avaliação em `before(capture)`.
 
-Contracasos independentes: remover `p` invalida apenas a cópia entre células distintas; mudar seu escopo para uma operação que não cobre `capture` também. Manter apenas a mesma lacuna nos dois objetos não substitui a prova. Acrescentar `add(read(@x),read(@y))`, `concat(read(@x),read(@y))`, `not(read(@x))` ou `eq(read(@x),read(@y))` continua inválido mesmo com `p`. Uma cadeia de premissas que una `known(int)` a `known(text)` através de `@x` é contraditória.
+Contracasos independentes: remover `p` invalida apenas a cópia entre células distintas; mudar seu escopo para `operation(change)` também, pois não contém `operation_site(capture)`. Manter apenas a mesma lacuna nos dois objetos não substitui a prova. Acrescentar `add(read(@x),read(@y))`, `concat(read(@x),read(@y))`, `not(read(@x))` ou `eq(read(@x),read(@y))` continua inválido mesmo com `p`. Uma cadeia de premissas que una `known(int)` a `known(text)` através de `@x` é contraditória.
 
 ## X-38 — Transmissão sem conversão através de assinatura
 
 Esta publicação substitui o contexto de unidade única. O chamador tem células independentes `@source : unknown_type(u)` e `@result : unknown_type(v)`, com estado externo desconhecido. A entrada `e` do chamado tem um parâmetro por valor de `unknown_type(w)`, objeto de entrada `@param : unknown_type(w)` associado a célula própria e uma posição de resultado `unknown_type(z)`. As quatro lacunas são declaradas com código `TYPE_UNKNOWN` e origens próprias do cenário.
 
-O contrato de transmissão estabelece, com premissas distintas, autoridade e origem `example:X-38/contract`, os vínculos abaixo. A posição é identificada pela entrada `e`, direção e índice; os vínculos entre unidades valem somente para a ativação da chamada `k`.
+O contrato de transmissão estabelece, com premissas distintas, autoridade e origem `example:X-38/contract`, os vínculos abaixo. As posições da declaração de `e` distinguem-se de suas instâncias na fronteira de `k`, conforme 02, §1.4. `@source`/`@result` pertencem ao chamador; `@param` pertence ao chamado. Cada premissa vale em todas as execuções dos sites denotados por seu escopo, não em uma única ativação selecionada.
 
 | Premissa | Sujeitos | Escopo |
 | --- | --- | --- |
-| `p_in` | `sameDomain(@source, parameter(e,1))` | Captura de argumento na chamada `k` |
-| `p_binding` | `sameDomain(parameter(e,1), @param)` | Inicialização por parâmetro da ativação de `e` vinculada a `k` |
-| `p_return` | `sameDomain(@param, result(e,1))` | Retorno `r` dessa ativação |
-| `p_out` | `sameDomain(result(e,1), @result)` | Transmissão do resultado no retorno normal de `k` |
+| `p_in` | `sameDomain(@source, parameter(k,e,1))` | `invocation(k)` |
+| `p_binding` | `sameDomain(parameter(e,1), @param)` | `entry(e)` |
+| `p_return` | `sameDomain(@param, result(e,1))` | `operation(r)` |
+| `p_out` | `sameDomain(result(k,e,1), @result)` | `invocation(k)` |
 
 ```air
 unit @caller entry ^entry
@@ -191,11 +191,11 @@ unit @callee entry e -> ^body
 
 O cenário estabelece ausência de efeitos no armazenamento do chamador além do resultado e retorno normal sem exceção, término ou divergência. O corpo mostra que o valor recebido é devolvido; `sameDomain` sozinho não daria essa informação. Se a captura de `@source` fornece `v₀`, o parâmetro e o resultado transmitido carregam `v₀`; os domínios concretos permanecem não identificados. Substituir `value` por `copy` conserva a transmissão de valor, com armazenamento privado do chamado. Uma variante por `reference` exige também a associação precisa do local e não implica cópia do conteúdo.
 
-Remover qualquer prova impede a transmissão precisa correspondente. Reutilizar `p_in`/`p_out` numa chamada diferente não é autorizado por igualdade de nomes das posições. Uma segunda chamada exige seus vínculos aplicáveis e não iguala os valores de ativações diferentes. Se o chamado devolver outro valor de mesmo domínio, o resultado muda conforme o corpo: igualdade de domínio não promete função identidade.
+Remover qualquer prova impede a transmissão precisa correspondente. `p_binding` não pode validar `r`, porque `entry(e)` não inclui `operation_site(r)`; `p_in`/`p_out` também não valem no corpo. Reutilizar `p_in`/`p_out` numa chamada diferente não é autorizado por igualdade de nomes das posições. Uma segunda chamada exige seus vínculos aplicáveis, mas pode usar a mesma declaração de entrada/corpo com `p_binding` e `p_return` universais nos respectivos sites. Repetir `k`, inclusive recursivamente, reaplica seus vínculos aos papéis daquela execução e não iguala os valores de ativações diferentes. Se o chamado devolver outro valor de mesmo domínio, o resultado muda conforme o corpo: igualdade de domínio não promete função identidade.
 
 ## X-39 — Domínio comum em escolhas sem tipo concreto
 
-As células `@x`, `@y` e `@dst` têm lacunas de tipo distintas, com origem no cenário. Duas premissas com autoridade `example:X-39/input` e escopo da operação `c` comprovam `sameDomain(@x,@dst)` e `sameDomain(@y,@dst)`. A construção observada copia o valor selecionado sem conversão.
+As células `@x`, `@y` e `@dst` têm lacunas de tipo distintas, com origem no cenário. Duas premissas com autoridade `example:X-39/input`, origens próprias e `scope=operation(c)` comprovam `sameDomain(@x,@dst)` e `sameDomain(@y,@dst)`. A construção observada copia o valor selecionado sem conversão.
 
 ```air
 ^entry:
@@ -205,4 +205,34 @@ As células `@x`, `@y` e `@dst` têm lacunas de tipo distintas, com origem no ce
 
 `u_choice` é uma lacuna `TYPE_UNKNOWN` própria da escolha. A cópia é válida porque ambos os candidatos têm o mesmo domínio do destino, embora nenhum domínio concreto tenha sido identificado. As duas alternativas de valor e suas ocorrências continuam observáveis. A prova não escolhe uma delas.
 
-Abrir `remainder=visible` sem garantia de mesmo domínio para todo esse escopo invalida a cópia precisa; provar só o primeiro candidato também não basta. Numa variante de destino `choice([@x,@y],...)`, a escrita permanece alternativa/fraca, mesmo com domínio comum comprovado. Duas avaliações independentes de uma escolha entre `known(int)` e `known(text)` não têm `sameDomain` apenas porque reutilizam a mesma expressão ou lacuna.
+Abrir `remainder=visible` sem garantia de mesmo domínio para todo esse restante invalida a cópia precisa; provar só o primeiro candidato também não basta. Na variante aberta válida, `pc` é o `OperandId` do local `choice` dentro de `read`, e acrescenta-se:
+
+```air
+premise p_open: sameDomain(pc,@dst) scope=operation(c)
+                authority=example:X-39/open-domain origin=example:X-39/remainder-evidence
+```
+
+A autoridade do cenário estabelece que todos os locais possíveis de `pc`, inclusive todo membro do restante visível, têm o domínio de `@dst`. A premissa sobre `pc` cobre a escolha inteira e basta, mesmo sem as duas premissas individuais. As alternativas não desaparecem e `u_choice` continua desconhecido; o exemplo não afirma essa garantia para memória fora da escolha. Remover `p_open` mantendo apenas as provas dos candidatos volta a invalidar a variante aberta. Mover a premissa para outra operação também a torna inaplicável. Substituir `pc` por outra ocorrência, ainda que copie a mesma expressão, não prova a cobertura desta. Se `@dst` for `known(text)` e um candidato for `known(int)`, a premissa universal é contraditória.
+
+Numa variante de destino `choice([@x,@y],...)`, a escrita permanece alternativa/fraca, mesmo com domínio comum comprovado. Duas avaliações independentes de uma escolha entre `known(int)` e `known(text)` não têm `sameDomain` apenas porque reutilizam a mesma expressão ou lacuna.
+
+## X-40 — Aplicabilidade e interseção de escopos
+
+Esta publicação tem unidades distintas `U` e `V`, entradas `eU` e `eV` respectivamente, e células visíveis `@a`, `@b`, `@c` com tipos desconhecidos de lacunas próprias. `U` contém as operações distintas `copy` (`assign @c <- read(@a)`) e `other` (`nop`), além de `invoke k` para `eV` e outra chamada `k2`. `V` contém `return r`. As demais condições de memória, controle e assinatura são satisfeitas independentemente das premissas testadas.
+
+`p1: sameDomain(@a,@b)` e `p2: sameDomain(@b,@c)` têm IDs distintos, autoridade `example:X-40/input` e origens próprias; são as únicas bases não reflexivas disponíveis para a cópia. Cada linha abaixo é uma variante independente:
+
+| `p1.scope` | `p2.scope` | Interseção | Prova em `operation_site(copy)` |
+| --- | --- | --- | --- |
+| `publication` | `operation(copy)` | `operation(copy)` | Aplicável |
+| `unit(U)` | `operation(copy)` | `operation(copy)` | Aplicável |
+| `operation(copy)` | `operation(other)` | Vazia | Inaplicável |
+| `unit(V)` | `operation(copy)` | Vazia | Inaplicável |
+| `entry(eU)` | `operation(copy)` | Vazia | Inaplicável, mesmo se `copy` for a primeira operação de `eU` |
+| `intersection(unit(U),operation(copy))` | `publication` | `operation(copy)` | Aplicável |
+
+Nas variantes aplicáveis, a regra de `read` permite concluir `sameDomain(@c,read(@a))` e a cópia é válida. Nas demais, a cópia precisa é inválida por falta de prova, não por falta de tipo concreto. A interseção vazia é um escopo bem formado sem sites, não uma licença para usar um escopo maior.
+
+Para uma premissa com sujeitos apropriados à chamada, `intersection(operation(k),invocation(k))` cobre apenas `invocation_site(k)`: não cobre `operation_site(k)`, `entry_site(eV)`, `operation_site(r)` ou `invocation_site(k2)`. `unit(U)` inclui ambos os sites de `k`, mas não os sites de `V`; contenção de uma unidade tampouco transfere essa cobertura. `publication` inclui todos esses sites sem identificar seus sujeitos entre si. Repetição/recursão reaplica os fatos universalmente sem identificar ativações; nenhum escopo promete alcançabilidade.
+
+Contracasos de formação: `invocation(other)`, `unit` referindo um `EntryId`, referência a ID inexistente, forma `activation(U)` e composição circular/não finita são inválidos, mesmo em premissa não utilizada. Uma condição textual de caminho ou uma garantia apenas da primeira execução de `k` não pode substituir `DomainProofScope`.

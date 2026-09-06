@@ -6,7 +6,7 @@
 
 Os blocos `air` ilustram a sintaxe abstrata da especificação. Não definem um formato de intercâmbio, parser, linguagem de implementação ou API. Todos os seus elementos têm significado nos documentos normativos. A notação omite repetição de metadados, não fatos semânticos necessários aos resultados esperados.
 
-Cada cenário X-01 a X-39 é uma publicação independente. Variantes dentro do mesmo cenário são explicitamente independentes quando indicado. As consultas escritas após os blocos são resultados de consumers, **não conteúdo da IR**.
+Cada cenário X-01 a X-40 é uma publicação independente. Variantes dentro do mesmo cenário são explicitamente independentes quando indicado. As consultas escritas após os blocos são resultados de consumers, **não conteúdo da IR**.
 
 ## 2. Identificadores e abreviações
 
@@ -24,7 +24,7 @@ Cada cenário X-01 a X-39 é uma publicação independente. Variantes dentro do 
 | `unknown(R)` | Valor desconhecido com `R: TypeRef`, sem escritas/controle oculto |
 | `known(T)` | Domínio de valor estabelecido; `T` isolado abrevia essa forma em posição de `TypeRef` |
 | `unknown_type(u)` | Domínio não estabelecido, referindo a lacuna `TYPE_UNKNOWN` de identidade `u` |
-| `premise p: sameDomain(a,b)` | Premissa tipada de domínio comum, com sujeitos, autoridade, origem e escopo explícitos; não iguala valores |
+| `premise p: sameDomain(a,b)` | Premissa tipada de domínio comum, com sujeitos, autoridade, origem e `scope` nas formas de `DomainProofScope` (02, §1.4); não iguala valores |
 | `before(k)` | Ponto imediatamente antes da operação `k` |
 | `RD(@x,before(k))` | Consulta derivada de definições alcançáveis |
 | `PV(@x,before(k))` | Consulta derivada de valores possíveis |

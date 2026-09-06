@@ -748,7 +748,7 @@ As projeções estruturais dos oráculos anteriores são delimitadas abaixo. Ela
 
 ## O-82 — Provas de mesmo domínio são fatos com escopo
 
-**Cenário:** X-37. Variantes: premissa ausente; fora do escopo de `capture`; sujeito inexistente; cadeia circular sem base; cadeia ligando `known(int)` e `known(text)` por sujeito desconhecido; bases independentes combinadas por simetria/transitividade no escopo comum.
+**Cenário:** X-37. Variantes: premissa ausente; `scope=operation(change)` em vez de `operation(capture)`; sujeito inexistente; cadeia circular sem base; cadeia ligando `known(int)` e `known(text)` por sujeito desconhecido; bases independentes combinadas por simetria/transitividade no escopo comum. O-85 detalha a álgebra de escopos.
 
 **Resultado obrigatório:**
 
@@ -764,7 +764,7 @@ As projeções estruturais dos oráculos anteriores são delimitadas abaixo. Ela
 
 **Resultado obrigatório:**
 
-**O-83-STRUCT:** Validar cada vínculo de domínio e seu escopo de chamada/ativação; preservar modos e origens. Tipo concreto desconhecido não impede transmissão precisa com prova. Remover uma prova impede a transmissão precisa correspondente. Prova de um site não autoriza outro; referência exige também associação de local/vista apropriada.
+**O-83-STRUCT:** Validar cada vínculo de domínio no site de uso definido em 02, §1.4; preservar modos e origens. `p_in`/`p_out` aplicam-se a `invocation_site(k)`; `p_binding`, a `entry_site(e)`; `p_return`, a `operation_site(r)`. Tipo concreto desconhecido não impede transmissão precisa com prova. Remover uma prova impede a transmissão precisa correspondente. Prova limitada a `k` não autoriza `k2`, a entrada ou o corpo do chamado; `entry(e)` não cobre `r`. Preservar os sujeitos de assinatura instanciados por site e papéis chamador/chamado, inclusive sob repetição/recursão; referência exige também associação de local/vista apropriada.
 
 **O-83-SCALAR:** O valor capturado chega ao parâmetro por `value`/`copy`; no corpo identidade do cenário, `return` o transmite ao resultado normal. Conteúdos de chamadas diferentes não são igualados por compartilhar assinatura/domínio. `reference` disponibiliza local sem afirmar cópia ou leitura de conteúdo pelo modo sozinho. Se o corpo devolver outro valor do mesmo domínio, esse valor rege o resultado.
 
@@ -772,12 +772,22 @@ As projeções estruturais dos oráculos anteriores são delimitadas abaixo. Ela
 
 ## O-84 — Cobertura de domínio em escolhas
 
-**Cenário:** X-39 e contracasos com prova só para um candidato, restante aberto sem garantia de domínio, avaliações independentes de escolha heterogênea e destino alternativo.
+**Cenário:** X-39, incluindo a premissa universal sobre a ocorrência inteira `pc` com restante aberto. Contracasos: prova só para um candidato; restante aberto sem garantia de domínio; premissa sobre outra ocorrência ou fora do site; premissa universal ligando candidato `known(int)` a destino `known(text)`; avaliações independentes de escolha heterogênea; destino alternativo.
 
 **Resultado obrigatório:**
 
-**O-84-STRUCT:** A cópia exige prova que cubra todas as combinações admissíveis e o restante; com essa prova, é válida apesar de `unknown_type`. Prova parcial é insuficiente. Mesma representação de escolha heterogênea não prova domínio comum de duas avaliações. Preservar candidatos, suas ocorrências e escopos das premissas.
+**O-84-STRUCT:** A cópia exige prova que cubra todas as combinações admissíveis e o restante; com essa prova, é válida apesar de `unknown_type`. Admitir a premissa `sameDomain(pc,@dst)` em `operation(c)` como garantia sobre todos os candidatos e membros do restante de `pc`, sem campo adicional de tipo do restante. Provas apenas dos candidatos não validam a escolha aberta. Rejeitar a contradição concreta, a referência a outra ocorrência como se fosse `pc` e o uso fora do site. Mesma representação de escolha heterogênea não prova domínio comum de duas avaliações. Preservar candidatos, restante, ocorrências, `TypeRef` e escopos das premissas; não exigir que o Validator certifique a verdade externa da garantia universal.
 
 **O-84-SCALAR:** Conservar as alternativas de valor da origem; na variante de destino alternativo, a escrita permanece fraca em cada candidato. A prova de domínio não seleciona local, elimina restante ou prova disjunção.
 
 **Falha a detectar:** Validar a partir do primeiro candidato, ignorar restante, confundir identidade de expressão com captura única ou promover escrita alternativa a obrigatória em todos os locais.
+
+## O-85 — Escopos de prova fechados e decidíveis
+
+**Cenário:** X-40. Duas premissas de domínio comum compõem a prova de uma cópia, com escopos de publicação, unidade, entrada, operação e interseções. Há duas chamadas distintas e uma unidade chamada. Variantes com escopo malformado, interseção vazia, unidades contidas e repetição/recursão.
+
+**Resultado obrigatório:**
+
+**O-85-STRUCT:** Interpretar exatamente os sites e formas de `DomainProofScope` definidos em 02, §1.4. Para `copy` de `U`, `publication ∩ operation(copy)`, `unit(U) ∩ operation(copy)` e suas composições finitas cobrem `operation_site(copy)`; `operation(other) ∩ operation(copy)`, `unit(V) ∩ operation(copy)` e `entry(eU) ∩ operation(copy)` são vazios. Só as primeiras variantes sustentam a cópia quando não há outra prova. `operation(k) ∩ invocation(k)` cobre a transmissão em `k`, não a avaliação local, outra chamada, entrada ou corpo do chamado. `unit(U)` cobre seus próprios sites, sem propagar-se a unidades contidas/chamadas; `publication` cobre todos os sites, sem dispensar a correspondência dos sujeitos. Rejeitar IDs inexistentes/de domínio incorreto, `invocation` de não-`invoke`, formas não admitidas e composição não finita, mesmo em premissa não utilizada. Preservar a quantificação universal sobre execuções e a distinção dos vínculos chamador/chamado, sem inferir alcançabilidade, igualdade de ativações ou um escopo dinâmico. Uma interseção vazia bem formada é admitida, mas seu uso como única prova viola I-08/I-52. Esses resultados não exigem calcular CFG, efeitos, RD ou valores.
+
+**Falha a detectar:** Tratar escopo como texto livre, substituir interseção vazia por ancestral comum, estender escopo de entrada ao corpo ou de chamada ao chamado, reutilizar vínculo de outra chamada/ocorrência, aceitar `activation(...)` ou delegar aplicabilidade a uma análise de execução.

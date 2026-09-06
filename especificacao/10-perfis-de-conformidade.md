@@ -10,7 +10,7 @@ A declaração de conformidade especifica papel, versão, perfis e capacidades, 
 
 Todos os papéis DEVEM distinguir tipo conhecido do core, domínio de extensão identificado e `unknown_type`, além do desconhecimento de valor/storage/binding. `Validator` rejeita precondição concreta não satisfeita; `Producer` conserva a construção por abstração; `Consumer` mantém fatos independentes e não consulta o frontend para completar o domínio. Os perfis `@2` incorporam essas obrigações conforme [09](09-extensibilidade-e-compatibilidade.md).
 
-Uma precondição de cópia/transmissão é satisfeita por prova de `sameDomain`, mesmo sem identificar o domínio concreto. A conformidade inclui preservar as bases, sujeitos e escopos dessa prova; não exige consultar o frontend nem interpretar uma lacuna como variável de unificação.
+Uma precondição de cópia/transmissão é satisfeita por prova de `sameDomain`, mesmo sem identificar o domínio concreto. A conformidade inclui preservar as bases, sujeitos e `DomainProofScope` dessa prova, decidindo aplicabilidade e interseção pelos sites estáticos de 02, §1.4; não exige consultar o frontend nem interpretar uma lacuna como variável de unificação. Validar a forma/uso de uma garantia universal de domínio sobre `choice` não certifica sua verdade sobre armazenamento externo.
 
 ## 2. Níveis de aceitação
 
@@ -22,7 +22,7 @@ Uma precondição de cópia/transmissão é satisfeita por prova de `sameDomain`
 
 Um consumidor pode ser preciso para um subconjunto da publicação e conservador para outro, desde que o escopo e a combinação nas consultas permaneçam explícitos. O restante aberto não impede `VALID`; pode impedir `PRECISE_FOR_PROFILE` para uma consulta que o atravessa.
 
-As referências com sufixo nos perfis abaixo são sub-requisitos normativos definidos em [Oráculos — Sub-requisitos por produto](../conformidade/02-oraculos.md#sub-requisitos-por-produto). Cada referência exige somente as assertivas desse ID; referências sem sufixo exigem o oráculo integral. Um intervalo como O-69-STRUCT a O-84-STRUCT expande para todos os IDs numerados nesse intervalo com o mesmo sufixo. Não há projeção implícita de frases de um resultado misto. `Producer` demonstra a preservação por suas regras e cenários, `Validator` verifica validade, e `Consumer` satisfaz os resultados do produto/perfil declarado; checks estruturais não certificam a veracidade de premissas semânticas.
+As referências com sufixo nos perfis abaixo são sub-requisitos normativos definidos em [Oráculos — Sub-requisitos por produto](../conformidade/02-oraculos.md#sub-requisitos-por-produto). Cada referência exige somente as assertivas desse ID; referências sem sufixo exigem o oráculo integral. Um intervalo como O-69-STRUCT a O-85-STRUCT expande para todos os IDs numerados nesse intervalo com o mesmo sufixo. Não há projeção implícita de frases de um resultado misto. `Producer` demonstra a preservação por suas regras e cenários, `Validator` verifica validade, e `Consumer` satisfaz os resultados do produto/perfil declarado; checks estruturais não certificam a veracidade de premissas semânticas.
 
 ## 3. Perfil `AIR-STRUCTURE@2`
 
@@ -32,7 +32,7 @@ O consumidor CFG desse perfil deve preservar ordem intrassequência, bifurcaçõ
 
 Sub-requisitos obrigatórios: O-01-STRUCT a O-10-STRUCT, O-18-STRUCT a O-22-STRUCT, O-29-STRUCT a O-34-STRUCT e O-41-STRUCT a O-48-STRUCT.
 
-Também exige O-69-STRUCT a O-84-STRUCT. O perfil não exige O-69-SCALAR a O-70-SCALAR, O-72-SCALAR a O-80-SCALAR, O-82-SCALAR a O-84-SCALAR nem O-81-REGION: preservar uma declaração de escrita/cópia não exige calcular os valores ou efeitos resultantes.
+Também exige O-69-STRUCT a O-85-STRUCT. O perfil não exige O-69-SCALAR a O-70-SCALAR, O-72-SCALAR a O-80-SCALAR, O-82-SCALAR a O-84-SCALAR nem O-81-REGION: preservar uma declaração de escrita/cópia não exige calcular os valores ou efeitos resultantes.
 
 ## 4. Perfil `AIR-SCALAR-FLOW@2`
 
@@ -44,7 +44,7 @@ Calls podem ser tratados por limites externos, sem corpo interprocedural preciso
 
 Oráculos adicionais integrais: O-01 a O-17, O-20, O-22 a O-29, O-35, O-36, O-47, O-49 e O-50. As referências integrais a O-20, O-22, O-29 e O-47 incluem as assertivas de valores/efeitos que suas projeções estruturais não exigem.
 
-Sub-requisitos adicionais: O-69-SCALAR a O-70-SCALAR, O-72-SCALAR a O-80-SCALAR e O-82-SCALAR a O-84-SCALAR. O-71 possui somente assertivas estruturais, já herdadas. Os resultados incluem efeitos e captura/cópia de valores mesmo sob `unknown_type`, quando `sameDomain` estiver comprovado; não exigem enumerar um valor que o cenário não identifica.
+Sub-requisitos adicionais: O-69-SCALAR a O-70-SCALAR, O-72-SCALAR a O-80-SCALAR e O-82-SCALAR a O-84-SCALAR. O-71 e O-85 possuem somente assertivas estruturais, já herdadas. Os resultados incluem efeitos e captura/cópia de valores mesmo sob `unknown_type`, quando `sameDomain` estiver comprovado; não exigem enumerar um valor que o cenário não identifica.
 
 ## 5. Perfil `AIR-REGION-FLOW@2`
 

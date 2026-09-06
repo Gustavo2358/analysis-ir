@@ -19,7 +19,7 @@ Uma `Publication` é um conjunto fechado e imutável de fatos de IR. Ela DEVE co
 | `origins` | 0..N | Âncoras de proveniência e derivações |
 | `coverage` | 1 | Inventário de cobertura, incluindo escopo e disponibilidade |
 | `uncertainties` | 0..N | Lacunas referenciadas por fatos ou escopos |
-| `premises` | 0..N | Premissas semânticas identificadas e rastreáveis, inclusive fatos tipados `sameDomain` com sujeitos, escopo e autoridade conforme [02](02-tipos-valores-e-operandos.md) |
+| `premises` | 0..N | Premissas semânticas identificadas e rastreáveis, inclusive fatos tipados `sameDomain` com sujeitos, `DomainProofScope` e autoridade conforme [02](02-tipos-valores-e-operandos.md#14-escopo-de-provas-de-domínio) |
 
 Uma publicação vazia é permitida apenas se seu escopo e a disponibilidade do inventário distinguirem “zero conhecido” de “não analisado”.
 
