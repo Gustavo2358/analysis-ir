@@ -1,7 +1,9 @@
 # Checkpoint 0B — Baseline AIR JSON e conformidade mínima do MVP
 
 **Informativo — base de implementação e plano de evidência, não outro binding.**
-O futuro módulo `air-java:air-json` implementará a candidata pinada abaixo.
+O futuro módulo separado de codec JSON no repositório `air-java` implementará a
+candidata pinada abaixo. `air-json` é seu nome conceitual/provisório; artifactId,
+coordenadas e topologia Maven serão decididos no discovery 0C-D.
 O primeiro E2E exercitará apenas as formas transitivamente necessárias à Publication
 do slice GOBACK. Nenhum encode, decode, round-trip ou E2E é anunciado como executado
 por este checkpoint documental.
@@ -33,9 +35,16 @@ a PR pronto para revisão humana, sem o merge previsto no acompanhamento geral.
 
 **Implemente o SHA acima, não uma `main` flutuante.** Por exemplo, dentro de
 `analysis-ir`, `git show 122ce54e1b9ef9b00646f93ece409ca8b63bc933:bindings/json-v1.md`
-recupera a candidata. Os links locais deste guia referem os documentos desse mesmo
-snapshot; o commit de documentação de 0B não substitui o pin nem cria uma versão.
-Uma revisão posterior exige novo registro e avaliação explícita de diferenças.
+recupera a candidata.
+
+Os links relativos servem apenas para navegação no checkout corrente. Para
+implementação e decisões normativas, o binding e todo conteúdo de referência em
+`bindings/`, `especificacao/` e `conformidade/` devem ser resolvidos no baseline
+`122ce54e1b9ef9b00646f93ece409ca8b63bc933`, por exemplo com
+`git show <SHA>:<path>`. Uma revisão posterior da `main` não altera este baseline
+nem autoriza combinar o binding pinado com normativos de outra revisão.
+O commit de documentação de 0B não substitui o pin nem cria uma versão. A adoção
+de outro baseline exige novo registro e avaliação explícita de diferenças.
 
 A hierarquia permanece AIR → binding → implementação. As autoridades de leitura
 são [escopo AIR](../especificacao/00-escopo-e-convencoes.md),
@@ -116,9 +125,9 @@ incerteza dimensional não exige acrescentar `Envelope` a `return`.
 
 ## 3. Matriz mínima de conformidade a implementar
 
-**Todas as células “planejado” são trabalho futuro em `air-java:air-json`, sem
-implementação ou execução comprovada em 0B.** `MVP` identifica a prioridade de
-evidência do primeiro E2E; não um perfil normativo nem uma lista de formas válidas
+**Todas as células “planejado” são trabalho futuro no módulo de codec JSON do
+repositório `air-java`, sem implementação ou execução comprovada em 0B.** `MVP`
+identifica a prioridade de evidência do primeiro E2E; não um perfil normativo nem uma lista de formas válidas
 exclusivas. `Variação` exige outra entrada admitida do slice; `vazio` testa presença
 e preservação do contêiner, não cobertura de seus elementos.
 

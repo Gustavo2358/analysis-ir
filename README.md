@@ -16,7 +16,7 @@ Os [escopos de provas de domínio](especificacao/02-tipos-valores-e-operandos.md
 
 O [Analysis IR JSON Binding 1.0.0](bindings/json-v1.md) **targets AIR 2.0.0** e permanece **DRAFT**, inclusive após o merge do PR que o introduz. **Transport contract != semantic version.** O modelo oficial está em `especificacao/` e `conformidade/`; JSON apenas o codifica. `ContractRef` identifica autoridade/versão/evidência, com assinatura e conteúdo materializados no `invoke`, sem inventário top-level de contratos ou lookup tardio. A [revisão e handoff](bindings/revisao-json-v1.md) registra a reconciliação necessária em `air-java`, que não governa a AIR.
 
-O [checkpoint 0B — baseline e matriz do MVP](bindings/checkpoint-0b-mvp.md) fixa o SHA da candidata para a futura implementação em `air-java:air-json`, identifica as formas exercitadas pelo primeiro GOBACK E2E e indexa regras físicas e itens adiados. É um guia informativo; não promove o draft nem anuncia codec ou round-trip implementados.
+O [checkpoint 0B — baseline e matriz do MVP](bindings/checkpoint-0b-mvp.md) fixa o SHA da candidata para o futuro módulo de codec JSON no repositório `air-java`, identifica as formas exercitadas pelo primeiro GOBACK E2E e indexa regras físicas e itens adiados. `air-json` é o nome conceitual/provisório do módulo; artifactId, coordenadas e topologia Maven serão decididos no discovery 0C-D. É um guia informativo; não promove o draft nem anuncia codec ou round-trip implementados.
 
 ## Propósito
 
